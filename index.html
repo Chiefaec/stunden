@@ -418,7 +418,8 @@ function dayCalc(k){
   (e && e.b || []).forEach(b => { const a = toMin(b.s); let z = toMin(b.e); if (a == null || z == null) return; if (z === 0) z = 1440; if (z > a) work += z - a; });
   const f = (e && e.f) || 1, cr = (st.credit ?? st.weekly / 5) * 60;
   let credit = 0;
-  if (inR) { if (type === 'feiertag') credit = auto && !weekday ? 0 : cr; else if (HALF.has(type)) credit = cr * f; }
+  // Feiertage, Ferien, Krankheit und Unfall gelten nur Mo–Fr (5 Tage à 9 Std.); am Wochenende keine Gutschrift
+  if (inR && weekday) { if (type === 'feiertag') credit = cr; else if (HALF.has(type)) credit = cr * f; }
   return { k, d, e, soll, type, holName, work, credit, f, ist: work + credit, inR };
 }
 function weekCalc(mon, y){
@@ -435,6 +436,7 @@ function yearCalc(y){
   let vac = 0, krank = 0, unfall = 0, feier = 0;
   for (let d = new Date(y, 0, 1); d.getFullYear() === y; d = addDays(d, 1)) {
     const c = dayCalc(K(d)); if (!c.inR) continue;
+    if (!c.credit) continue; // nur Abwesenheiten an Werktagen zählen als Tage
     if (c.type === 'ferien') vac += c.f;
     if (c.type === 'krank') krank += c.f;
     if (c.type === 'unfall') unfall += c.f;
@@ -715,7 +717,7 @@ function viewSettings(){
     <div class="field"><label for="weekly">Sollzeit pro Woche</label><input id="weekly" type="number" inputmode="decimal" min="1" max="80" step="0.5" value="${st.weekly}" data-set="weekly"><span class="dim">Std.</span></div>
     <div class="field"><label for="credit">Gutschrift pro Abwesenheitstag</label><input id="credit" type="number" inputmode="decimal" min="0" max="24" step="0.25" value="${st.credit ?? st.weekly / 5}" data-set="credit"><span class="dim">Std.</span></div>
   </div>
-  <div class="foot">Gearbeitet wird an beliebigen Tagen. Abgerechnet wird pro Woche: Stunden plus Gutschriften gegenüber der Sollzeit. Eine Woche zählt zum Jahressaldo, sobald sie abgeschlossen ist. Ferien, Krankheit, Unfall und Feiertage werden mit der Gutschrift pro Tag angerechnet, Feiertage am Wochenende nicht.</div>
+  <div class="foot">Gearbeitet wird an beliebigen Tagen. Abgerechnet wird pro Woche: Stunden plus Gutschriften gegenüber der Sollzeit. Eine Woche zählt zum Jahressaldo, sobald sie abgeschlossen ist. Ferien, Krankheit, Unfall und Feiertage werden von Montag bis Freitag mit der Gutschrift pro Tag angerechnet, am Wochenende nicht. Samstagsstunden zählen voll zur Woche.</div>
 
   <div class="sect"><span>Ferien</span></div>
   <div class="list">
@@ -783,7 +785,7 @@ function renderSheet(){
       <h2 style="margin:0 4px">${WD[c.d.getDay()]}, ${c.d.getDate()}. ${MON[c.d.getMonth()]}</h2>
       <button class="chev" data-act="nextday" aria-label="Nächster Tag">${chevR}</button></div>
     <button class="link" data-act="close">Fertig</button></div>`;
-  if (c.holName) h += `<div class="hint">Feiertag: ${c.holName}</div>`;
+  if (c.holName) h += `<div class="hint">Feiertag: ${c.holName}${[0, 6].includes(c.d.getDay()) ? ' (am Wochenende ohne Gutschrift)' : ''}</div>`;
 
   if (!fullAbs) {
     const cur = patKey(e.b);
@@ -799,6 +801,7 @@ function renderSheet(){
 
   h += `<div class="sect" style="margin-left:0;margin-right:0"><span>Nicht gearbeitet?</span></div><div class="chips">` +
     ['ferien', 'krank', 'unfall', 'feiertag', 'frei'].map(id => { const t = TYPES[id]; return `<button class="chip${abs === id ? ' on' : ''}" style="--c:${t.c}" data-type="${id}" aria-pressed="${abs === id}"><span class="dot" style="background:${t.c}"></span>${t.label}</button>`; }).join('') + `</div>`;
+  if (abs && abs !== 'frei' && [0, 6].includes(c.d.getDay())) h += `<div class="hint" style="color:var(--sec);margin-top:10px">Am Wochenende gibt es keine Gutschrift. Ferien nur von Montag bis Freitag eintragen.</div>`;
   if (HALF.has(abs)) h += `<div class="seg" role="group"><button class="${e.f === .5 ? '' : 'on'}" data-frac="1">Ganzer Tag</button><button class="${e.f === .5 ? 'on' : ''}" data-frac="0.5">Halber Tag</button></div>`;
 
   h += `<div id="issues">${issuesHtml(c.e)}</div>`;
@@ -1004,7 +1007,7 @@ function printMonth(y, m){
   for (let d = first; d <= last; d = addDays(d, 1)) {
     const c = dayCalc(K(d)), wd = d.getDay(), b = (c.e && c.e.b) || [];
     if (c.inR) { ist += c.ist; soll += c.soll; }
-    if (c.type === 'ferien') vac += c.f; if (c.type === 'krank') krank += c.f; if (c.type === 'unfall') unfall += c.f;
+    if (c.credit) { if (c.type === 'ferien') vac += c.f; if (c.type === 'krank') krank += c.f; if (c.type === 'unfall') unfall += c.f; }
     const iv = b.filter(x => x.s && x.e).map(x => [toMin(x.s), toMin(x.e) || 1440]).sort((p, q) => p[0] - q[0]);
     let pause = 0; for (let i = 1; i < iv.length; i++) pause += Math.max(0, iv[i][0] - iv[i - 1][1]);
     const abs = c.type ? TYPES[c.type].label + (HALF.has(c.type) && c.f === .5 ? ' ½' : '') + (c.type === 'feiertag' && c.holName ? ' (' + c.holName + ')' : '') : '';
@@ -1021,7 +1024,7 @@ function printMonth(y, m){
   const sal = saldoUntil(endK);
   // Ferien: Anspruch des Jahres minus bezogen bis Monatsende
   const yr = yearCalc(y);
-  let vacYear = 0; for (let d = new Date(y, 0, 1); d <= last; d = addDays(d, 1)) { const c = dayCalc(K(d)); if (c.inR && c.type === 'ferien') vacYear += c.f; }
+  let vacYear = 0; for (let d = new Date(y, 0, 1); d <= last; d = addDays(d, 1)) { const c = dayCalc(K(d)); if (c.inR && c.credit && c.type === 'ferien') vacYear += c.f; }
   const st = S.settings;
   $('#print').innerHTML = `<h1>Arbeitszeitkontrolle ${MON[m]} ${y}</h1>
   <div class="meta"><span>Name: ${esc(st.name || '______________________________')}</span><span>Sollzeit ${num(st.weekly)} Std. pro Woche</span></div>

@@ -458,32 +458,37 @@ function dayCalc(k){
   // Wochensoll wird auf Mo–Fr verteilt; nur für angebrochene Wochen relevant (Erfassungsbeginn, Jahreswechsel)
   const sollFull = inR && weekday ? st.weekly * 60 / 5 : 0;
   const holName = holidays(d.getFullYear())[k] || null;
-  const auto = !(e && e.a) && !!holName;
-  const type = e && e.a ? (e.a === 'arbeit' ? null : e.a) : (holName ? 'feiertag' : null);
+  // Feiertag bleibt Feiertag, auch wenn gearbeitet wird: die Arbeit kommt zusätzlich dazu (Kompensation)
+  const type = e && e.a && e.a !== 'arbeit' ? e.a : (holName ? 'feiertag' : null);
   let work = 0;
   (e && e.b || []).forEach(b => { const a = toMin(b.s); let z = toMin(b.e); if (a == null || z == null) return; if (z === 0) z = 1440; if (z > a) work += z - a; });
   const f = (e && e.f) || 1, cr = (st.credit ?? st.weekly / 5) * 60;
+  // Grundsatz: 45 Std. pro Woche, egal an welchen Tagen.
+  // Ein Abwesenheitstag (Ferien, Krank, Unfall) senkt das Wochensoll um 9 Std. (halber Tag 4:30), egal ob Mo–Sa.
+  // Ein Feiertag senkt das Wochensoll nur, wenn er auf Mo–Fr fällt.
   let credit = 0;
-  // Feiertage, Ferien, Krankheit und Unfall gelten Mo–Fr (5 Tage à 9 Std.); am Wochenende keine Gutschrift.
-  // Ausnahme: ausdrücklich eingetragene Ferien an einem Samstag (Ferienwunsch) zählen als Ferientag.
-  if (inR && weekday) { if (type === 'feiertag') credit = cr; else if (HALF.has(type)) credit = cr * f; }
-  else if (inR && wd === 6 && type === 'ferien') credit = cr * f;
-  // Abgerechnet wird die Wochensumme: freie Werktage müssen nicht eingetragen werden.
-  const counted = !!(e || type), soll = sollFull;
-  return { k, d, e, soll, sollFull, counted, type, holName, work, credit, f, ist: work + credit, inR };
+  if (inR && type === 'feiertag' && weekday) credit = cr;
+  else if (inR && HALF.has(type) && wd !== 0) credit = cr * f;
+  const vacDay = type === 'ferien' && credit ? f : 0;
+  // Sonderfall: Ferientag zählt als Ferientag, senkt aber das Soll nicht (bereits anders abgerechnet)
+  if (e && e.nc && type === 'ferien') credit = 0;
+  // Tages-Soll: 9 Std. Mo–Fr, minus Abwesenheit (am Samstag kann es dadurch negativ werden = Wochensoll sinkt)
+  const counted = !!(e || type), soll = sollFull - credit;
+  return { k, d, e, soll, sollFull, counted, type, holName, work, credit, vacDay, f, ist: work, inR };
 }
 function weekCalc(mon, y){
-  let ist = 0, soll = 0, sollFull = 0, any = false, entries = 0, late = false;
+  let ist = 0, soll = 0, sollFull = 0, absent = 0, any = false, entries = 0, late = false;
   for (let i = 0; i < 7; i++) {
     const d = addDays(mon, i); if (y != null && d.getFullYear() !== y) continue;
-    const c = dayCalc(K(d)); ist += c.ist; soll += c.soll; sollFull += c.sollFull; if (c.inR) any = true;
+    const c = dayCalc(K(d)); ist += c.ist; soll += c.soll; sollFull += c.sollFull; absent += c.credit; if (c.inR) any = true;
     if (c.e && c.inR) { entries++; if (i >= 4) late = true; }
   }
   const sun = K(addDays(mon, 6)), done = sun < TODAY;
   // fertig eingetragen = Woche vorbei und bis Freitag/Samstag eingetragen oder schon spätere Tage erfasst
   const le = lastEntry(+sun.slice(0, 4)) || lastEntry(mon.getFullYear());
   const fertig = done && entries > 0 && (late || !!(le && le > sun));
-  return { mon, ist, soll, sollFull, entries, saldo: ist - soll, done, fertig, any, current: K(mon) <= TODAY && !done };
+  soll = Math.max(0, soll); // mehr als eine ganze Woche Abwesenheit gibt kein Plus
+  return { mon, ist, soll, sollFull, absent, entries, saldo: ist - soll, done, fertig, any, current: K(mon) <= TODAY && !done };
 }
 // letzter Tag (bis heute) mit einem Eintrag
 function lastEntry(y){
@@ -496,8 +501,8 @@ function yearCalc(y){
   let vac = 0, krank = 0, unfall = 0, feier = 0;
   for (let d = new Date(y, 0, 1); d.getFullYear() === y; d = addDays(d, 1)) {
     const c = dayCalc(K(d)); if (!c.inR) continue;
-    if (!c.credit) continue; // nur Abwesenheiten an Werktagen zählen als Tage
-    if (c.type === 'ferien') vac += c.f;
+    vac += c.vacDay;
+    if (!c.credit) continue; // Krank/Unfall nur an Werktagen
     if (c.type === 'krank') krank += c.f;
     if (c.type === 'unfall') unfall += c.f;
     if (c.type === 'feiertag' && c.credit) feier += 1;
@@ -702,8 +707,8 @@ function saldoLine(){
 }
 function weekFoot(w){
   if (w.done) return `<span>Saldo dieser Woche</span><span class="pill ${cls(w.saldo)}">${fmt(w.saldo, true)}</span>`;
-  if (w.ist >= w.sollFull) return `<span>Soll erreicht</span><span class="pill pos">${fmt(w.ist - w.sollFull, true)}</span>`;
-  return `<span>${w.current ? 'Noch offen diese Woche' : 'Noch offen'}</span><span class="pill zero">${fmt(w.sollFull - w.ist)}</span>`;
+  if (w.ist >= w.soll) return `<span>Soll erreicht</span><span class="pill pos">${fmt(w.ist - w.soll, true)}</span>`;
+  return `<span>${w.current ? 'Noch offen diese Woche' : 'Noch offen'}</span><span class="pill zero">${fmt(w.soll - w.ist)}</span>`;
 }
 // vergangene Wochen ohne jeden Eintrag (noch nicht eingetragen)
 function openWeeks(){
@@ -903,7 +908,7 @@ function viewOverview(){
   let h = `<header class="top"><div><h1>Übersicht</h1><div class="sub">Saldo bis Ende der letzten fertigen Woche</div></div><div class="navs"><button class="link" data-act="ov-reload">Aktualisieren</button></div></header>`;
   if (!OVER) h += `<div class="list"><div class="empty">Wird geladen …</div></div>`;
   else if (!OVER.length) h += `<div class="list"><div class="empty">Noch keine Mitarbeiter. Unten den ersten eröffnen.</div></div>`;
-  else h += `<div class="list">` + OVER.map(o => `<button class="row" data-act="open-ma" data-id="${o.m.id}"><div class="grow"><div class="l1">${esc(o.m.name)}</div><div class="l2">Diese Woche ${fmt(o.week.ist)} von ${fmt(o.week.sollFull)}, Ferien übrig ${num(o.vacLeft)}${o.miss ? ', <span class="warn-t">' + (o.miss === 1 ? '1 Woche' : o.miss + ' Wochen') + ' offen</span>' : ''}</div></div><div class="right"><div class="h ${cls(o.saldo)}">${fmt(o.saldo, true)}</div><div class="s dim">${o.upTo ? 'bis ' + d2(o.upTo) : 'noch nichts'}</div></div>${chevS}</button>`).join('') + `</div>`;
+  else h += `<div class="list">` + OVER.map(o => `<button class="row" data-act="open-ma" data-id="${o.m.id}"><div class="grow"><div class="l1">${esc(o.m.name)}</div><div class="l2">Diese Woche ${fmt(o.week.ist)} von ${fmt(o.week.soll)}, Ferien übrig ${num(o.vacLeft)}${o.miss ? ', <span class="warn-t">' + (o.miss === 1 ? '1 Woche' : o.miss + ' Wochen') + ' offen</span>' : ''}</div></div><div class="right"><div class="h ${cls(o.saldo)}">${fmt(o.saldo, true)}</div><div class="s dim">${o.upTo ? 'bis ' + d2(o.upTo) : 'noch nichts'}</div></div>${chevS}</button>`).join('') + `</div>`;
   h += `<div class="sect"><span>Mitarbeiter verwalten</span></div><div class="list">` +
     MAS.map(m => `<div class="row"><span class="grow"><span class="l1">${esc(m.name)}</span><span class="l2">${m.device ? 'Mit Handy verbunden' : 'Noch kein Handy verbunden'}</span></span>${m.device ? `<button class="link" data-act="ma-release" data-id="${m.id}">Neues Handy zulassen</button>` : ''}</div>`).join('') +
     `<div class="field"><label for="nma">Neuer Mitarbeiter</label><input id="nma" type="text" autocomplete="off" placeholder="Vor- und Nachname" style="width:190px"></div>
@@ -969,13 +974,14 @@ function viewWeek(){
   const mon = V.week, cs = [...Array(7)].map((_, i) => dayCalc(K(addDays(mon, i))));
   const w = weekCalc(mon);
   const isCur = K(monday(new Date())) === K(mon);
-  const pct = w.sollFull ? Math.min(100, w.ist / w.sollFull * 100) : 0;
+  const pct = w.soll ? Math.min(100, w.ist / w.soll * 100) : (w.ist ? 100 : 0);
   let h = `<header class="top"><div><h1>Woche ${isoWeek(addDays(mon, 3))}</h1><div class="sub">${rangeLabel(mon)}</div></div>
     <div class="navs">${isCur ? '' : '<button class="link" data-act="thisweek">Heute</button>'}
     <button class="chev" data-act="prevweek" aria-label="Vorherige Woche">${chevL}</button>
     <button class="chev" data-act="nextweek" aria-label="Nächste Woche">${chevR}</button></div></header>
   <section class="hero">
-    <div class="hero-num"><span class="big">${fmt(w.ist)}</span><span class="of">von ${fmt(w.sollFull)} Std.</span></div>
+    <div class="hero-num"><span class="big">${fmt(w.ist)}</span><span class="of">von ${fmt(w.soll)} Std.</span></div>
+    ${w.absent ? `<div class="sub" style="margin-top:6px">Wochensoll ${fmt(w.sollFull)} minus ${fmt(w.absent)} Ferien, Krankheit, Unfall oder Feiertag</div>` : ''}
     <div class="bar"><i style="width:${pct}%"></i></div>
     <div class="hero-foot">${weekFoot(w)}</div>
     ${saldoLine()}
@@ -995,7 +1001,7 @@ function dayRow(c){
   let l1, l2 = '';
   if (c.type) {
     const t = TYPES[c.type];
-    l1 = `<span class="tag" style="color:${t.c}">${t.label}${HALF.has(c.type) && c.f === .5 ? ', halber Tag' : ''}</span>`;
+    l1 = `<span class="tag" style="color:${t.c}">${t.label}${HALF.has(c.type) && c.f === .5 ? ', halber Tag' : ''}${c.e && c.e.nc && c.type === 'ferien' ? ', ohne Stunden' : ''}</span>`;
     l2 = esc(blocks || c.e?.n || (c.type === 'feiertag' ? c.holName || '' : ''));
   } else if (blocks) { l1 = esc(blocks); l2 = esc(c.e?.n || ''); }
   else { l1 = !c.inR ? '<span class="dim">Vor Erfassungsbeginn</span>' : weekCalc(monday(c.d)).fertig ? '<span class="dim">Kein Eintrag</span>' : c.k <= TODAY ? '<span class="todo">Eintragen</span>' : '<span class="dim">Noch offen</span>'; l2 = esc(c.e?.n || ''); }
@@ -1004,7 +1010,7 @@ function dayRow(c){
   return `<button class="row${isT ? ' today' : ''}${c.inR ? '' : ' prestart'}" data-day="${c.k}">
     <div class="date"><div class="dw">${WD[wd]}</div><div class="dn">${c.d.getDate()}</div></div>
     <div class="grow"><div class="l1">${l1}</div>${l2 ? `<div class="l2">${l2}</div>` : ''}</div>
-    <div class="right">${c.ist ? `<div class="h">${fmt(c.ist)}</div>` : ''}${c.credit && c.work ? `<div class="s dim">inkl. ${fmt(c.credit)} Gutschr.</div>` : ''}</div>${chevS}</button>`;
+    <div class="right">${c.work ? `<div class="h">${fmt(c.work)}</div>` : ''}${c.credit ? `<div class="s dim">Soll −${fmt(c.credit)}</div>` : ''}</div>${chevS}</button>`;
 }
 
 function viewYear(){
@@ -1018,7 +1024,7 @@ function viewYear(){
     <div class="sub" style="margin:0 0 6px">Jahressaldo${r.upTo ? ' bis Ende Woche ' + isoWeek(P(r.upTo)) + ' (' + P(r.upTo).toLocaleDateString('de-CH') + ')' : ''}</div>
     <div class="hero-num"><span class="big ${cls(r.saldo)}">${fmt(r.saldo, true)}</span><span class="of">Std.</span></div>
     ${r.carrySaldo ? `<div class="hero-foot"><span>Davon Übertrag aus ${y - 1}</span><span>${fmt(r.carrySaldo, true)}</span></div>` : ''}
-    ${r.cur ? `<div class="hero-foot"><span>Laufende Woche</span><span>${fmt(r.cur.ist)} von ${fmt(r.cur.sollFull)}</span></div>` : ''}
+    ${r.cur ? `<div class="hero-foot"><span>Laufende Woche</span><span>${fmt(r.cur.ist)} von ${fmt(r.cur.soll)}</span></div>` : ''}
   </section>
   <div class="stats">
     <div class="stat wide"><div style="display:flex;justify-content:space-between;align-items:baseline"><span class="n">${num(left)} <span class="of" style="font-size:17px">von ${num(r.vacTotal)}</span></span><span class="dot" style="background:var(--teal)"></span></div>
@@ -1035,7 +1041,7 @@ function viewYear(){
     const ms = list.reduce((a, w) => a + (w.done ? w.saldo : 0), 0);
     h += `<div class="sect"><span>${MON[m]} <span class="${cls(ms)}">${fmt(ms, true)}</span></span><button class="mlink" data-act="month" data-y="${y}" data-m="${m}">Monatsblatt</button></div><div class="list">` +
       list.map(w => `<button class="row" data-week="${K(w.mon)}"><div class="grow"><div class="l1">Woche ${isoWeek(addDays(w.mon, 3))}</div><div class="l2">${rangeLabel(w.mon).replace(/ \d{4}$/, '')}</div></div>
-        <div class="right"><div class="h">${fmt(w.ist)} <span class="dim" style="font-weight:400">/ ${fmt(w.sollFull)}</span></div><div class="s ${w.done ? cls(w.saldo) : 'dim'}">${w.done ? fmt(w.saldo, true) : 'läuft'}</div></div>${chevS}</button>`).join('') + `</div>`;
+        <div class="right"><div class="h">${fmt(w.ist)} <span class="dim" style="font-weight:400">/ ${fmt(w.soll)}</span></div><div class="s ${w.done ? cls(w.saldo) : 'dim'}">${w.done ? fmt(w.saldo, true) : 'läuft'}</div></div>${chevS}</button>`).join('') + `</div>`;
   });
   return h;
 }
@@ -1047,9 +1053,9 @@ function viewSettings(){
   <div class="sect"><span>Arbeitszeit</span></div>
   <div class="list">
     <div class="field"><label for="weekly">Sollzeit pro Woche</label><input id="weekly" type="number" inputmode="decimal" min="1" max="80" step="0.5" value="${st.weekly}" data-set="weekly"${ro}><span class="dim">Std.</span></div>
-    <div class="field"><label for="credit">Gutschrift pro Abwesenheitstag</label><input id="credit" type="number" inputmode="decimal" min="0" max="24" step="0.25" value="${st.credit ?? st.weekly / 5}" data-set="credit"${ro}><span class="dim">Std.</span></div>
+    <div class="field"><label for="credit">Stunden pro Abwesenheitstag</label><input id="credit" type="number" inputmode="decimal" min="0" max="24" step="0.25" value="${st.credit ?? st.weekly / 5}" data-set="credit"${ro}><span class="dim">Std.</span></div>
   </div>
-  <div class="foot">Gearbeitet wird an beliebigen Tagen. Abgerechnet wird pro Woche: Stunden plus Gutschriften gegenüber der Sollzeit. Der Saldo gilt bis Ende der letzten fertig eingetragenen Woche. Freie Werktage müssen nicht eingetragen werden. Ferien, Krankheit, Unfall und Feiertage werden von Montag bis Freitag mit der Gutschrift pro Tag angerechnet, am Wochenende nicht. Ausnahme: Ferien, die bewusst auf einen Samstag gelegt werden, zählen als Ferientag. Samstagsstunden zählen voll zur Woche.</div>
+  <div class="foot">Gearbeitet wird an beliebigen Tagen. Abgerechnet wird pro Woche: Stunden plus Gutschriften gegenüber der Sollzeit. Der Saldo gilt bis Ende der letzten fertig eingetragenen Woche. Freie Werktage müssen nicht eingetragen werden. Jeder Ferien-, Kranken- oder Unfalltag (Mo–Sa) senkt das Wochensoll um diese Stunden, ein Feiertag von Mo–Fr ebenso; eine Ferienwoche ergibt Saldo 0. Arbeit an Feiertagen zählt zusätzlich. Samstagsstunden zählen voll zur Woche.</div>
 
   <div class="sect"><span>Ferien</span></div>
   <div class="list">
@@ -1112,15 +1118,16 @@ function suggestions(){
 }
 function renderSheet(){
   const k = V.sheet, c = dayCalc(k), e = c.e || {};
-  const abs = e.a && e.a !== 'arbeit' ? e.a : (!e.a && c.holName ? 'feiertag' : null);
-  const fullAbs = abs && !(HALF.has(abs) && e.f === .5);
+  const abs = e.a && e.a !== 'arbeit' ? e.a : (c.holName ? 'feiertag' : null);
+  // an Feiertagen kann trotzdem Arbeit eingetragen werden (zählt zusätzlich)
+  const fullAbs = abs && abs !== 'feiertag' && !(HALF.has(abs) && e.f === .5);
   const blocks = (e.b || []).slice(); while (blocks.length < 2) blocks.push({ s: '', e: '' });
   let h = `<div class="sh-head"><div class="daynav"><button class="chev" data-act="prevday" aria-label="Vorheriger Tag">${chevL}</button>
       <h2 style="margin:0 4px">${WD[c.d.getDay()]}, ${c.d.getDate()}. ${MON[c.d.getMonth()]}</h2>
       <button class="chev" data-act="nextday" aria-label="Nächster Tag">${chevR}</button></div>
     <button class="link" data-act="close">Fertig</button></div>`;
   if (e.c) h += `<div class="hint" style="color:var(--orange)">Korrigiert vom Chef${e.c !== 'Chef' ? ' (' + esc(e.c) + ')' : ''}</div>`;
-  if (c.holName) h += `<div class="hint">Feiertag: ${c.holName}${[0, 6].includes(c.d.getDay()) ? ' (am Wochenende ohne Gutschrift)' : ''}</div>`;
+  if (c.holName) h += `<div class="hint">Feiertag: ${c.holName}${[0, 6].includes(c.d.getDay()) ? ' (am Wochenende, ändert nichts)' : '. Gearbeitete Stunden zählen zusätzlich.'}</div>`;
 
   if (!fullAbs) {
     const cur = patKey(e.b);
@@ -1136,12 +1143,14 @@ function renderSheet(){
 
   h += `<div class="sect" style="margin-left:0;margin-right:0"><span>Nicht gearbeitet?</span></div><div class="chips">` +
     ['ferien', 'krank', 'unfall', 'feiertag', 'frei'].map(id => { const t = TYPES[id]; return `<button class="chip${abs === id ? ' on' : ''}" style="--c:${t.c}" data-type="${id}" aria-pressed="${abs === id}"><span class="dot" style="background:${t.c}"></span>${t.label}</button>`; }).join('') + `</div>`;
-  if (abs === 'ferien' && c.d.getDay() === 6) h += `<div class="hint" style="color:var(--sec);margin-top:10px">Ferien am Samstag zählen als ganzer Ferientag. Bei einer normalen Ferienwoche nur Montag bis Freitag eintragen.</div>`;
-  else if (abs && abs !== 'frei' && [0, 6].includes(c.d.getDay())) h += `<div class="hint" style="color:var(--sec);margin-top:10px">Am Wochenende gibt es dafür keine Gutschrift.</div>`;
+  if (abs === 'ferien' && c.d.getDay() === 6 && weekCalc(monday(c.d)).absent - c.credit >= weekCalc(monday(c.d)).sollFull) h += `<div class="hint" style="color:var(--orange);margin-top:10px">Diese Woche ist Montag bis Freitag schon ganz abwesend. Für den Samstag braucht es keinen Ferientag, er wäre verschenkt.</div>`;
+  else if (abs === 'ferien' && c.d.getDay() === 6) h += `<div class="hint" style="color:var(--sec);margin-top:10px">Ein Ferientag am Samstag zählt wie an jedem anderen Tag: 1 Ferientag, Wochensoll −9 Std. Nur eintragen, wenn an diesem Samstag sonst gearbeitet würde. Ein freier Samstag ohne Ferien braucht keinen Eintrag.</div>`;
+  else if (abs && abs !== 'frei' && abs !== 'feiertag' && c.d.getDay() === 6) h += `<div class="hint" style="color:var(--sec);margin-top:10px">Zählt wie an jedem anderen Tag: Wochensoll −9 Std.</div>`;
+  else if (abs && abs !== 'frei' && c.d.getDay() === 0) h += `<div class="hint" style="color:var(--sec);margin-top:10px">Am Sonntag ändert das nichts am Saldo.</div>`;
   if (HALF.has(abs)) h += `<div class="seg" role="group"><button class="${e.f === .5 ? '' : 'on'}" data-frac="1">Ganzer Tag</button><button class="${e.f === .5 ? 'on' : ''}" data-frac="0.5">Halber Tag</button></div>`;
 
   h += `<div id="issues">${issuesHtml(c.e)}</div>`;
-  h += `<div class="total" id="total"><span>Total ${c.credit ? '<span class="dim" style="font-size:14px">inkl. ' + fmt(c.credit) + ' ' + TYPES[c.type].label + '</span>' : ''}</span><span class="n">${fmt(c.ist)} <span class="of" style="font-size:15px">Std.</span></span></div>
+  h += `<div class="total" id="total">${totalHtml(c)}</div>
   <div class="sect" style="margin-left:0;margin-right:0"><span>Notiz (freiwillig)</span></div>
   <textarea rows="1" placeholder="z. B. Baustelle" data-note>${esc(e.n || '')}</textarea>
   ${c.e ? `<button class="del" data-act="clearday">Tag leeren</button>` : ''}`;
@@ -1220,17 +1229,17 @@ $('#wrap').addEventListener('click', ev => {
   if (!k) return;
   if (d.act === 'prevday' || d.act === 'nextday') { V.sheet = K(addDays(P(k), d.act === 'prevday' ? -1 : 1)); V.pick = null; V.week = monday(P(V.sheet)); renderSheet(); return; }
   const e = getEntry(k, true); e.b = e.b || [];
-  const toWork = () => { if (e.a && e.a !== 'arbeit' && !(HALF.has(e.a) && e.f === .5)) delete e.a; if (!e.a && dayCalc(k).holName) e.a = 'arbeit'; };
+  const toWork = () => { if (e.a && !(HALF.has(e.a) && e.f === .5)) delete e.a; };
   if (d.sug) {
     e.b = d.sug.split(', ').map(x => { const [s1, e1] = x.split('–'); return { s: s1, e: e1 }; });
     toWork(); V.pick = null; commit(k);
     if (navigator.vibrate) navigator.vibrate(10);
   }
   if (d.type) {
-    const c = dayCalc(k), cur = e.a && e.a !== 'arbeit' ? e.a : (!e.a && c.holName ? 'feiertag' : null);
-    if (cur === d.type) { if (c.holName) e.a = 'arbeit'; else delete e.a; }
+    const c = dayCalc(k), cur = e.a && e.a !== 'arbeit' ? e.a : (c.holName ? 'feiertag' : null);
+    if (cur === d.type) { if (!c.holName) delete e.a; }
     else if (d.type === 'feiertag' && c.holName) delete e.a;
-    else { e.a = d.type; delete e.f; }
+    else { e.a = d.type; delete e.f; delete e.nc; }
     if (e.a && e.a !== 'arbeit' && !HALF.has(e.a)) e.b = [];
     if (HALF.has(e.a)) e.b = [];
     V.pick = null; commit(k);
@@ -1266,8 +1275,7 @@ function saveSlot(el){
   while (e.b.length <= ii) e.b.push({ s: '', e: '' });
   if ((e.b[ii][f] || '') === t) return true;
   e.b[ii][f] = t;
-  if (t && e.a && e.a !== 'arbeit' && !(HALF.has(e.a) && e.f === .5)) delete e.a;
-  if (t && !e.a && dayCalc(k).holName) e.a = 'arbeit';
+  if (t && e.a && !(HALF.has(e.a) && e.f === .5)) delete e.a;
   while (e.b.length && !e.b[e.b.length - 1].s && !e.b[e.b.length - 1].e) e.b.pop();
   commit(k); refreshSheetBits();
   return true;
@@ -1277,13 +1285,17 @@ function focusNext(el){
   const nx = n && document.querySelector(`[data-slot="${n}"]`);
   if (nx) { nx.focus(); nx.select && nx.select(); } else el.blur();
 }
+function totalHtml(c){
+  const note = c.credit ? `<span class="dim" style="font-size:14px;display:block">${TYPES[c.type].label}: Wochensoll −${fmt(c.credit)}</span>` : (c.e && c.e.nc && c.type === 'ferien' ? `<span class="dim" style="font-size:14px;display:block">Ferientag ohne Stunden (anders abgerechnet)</span>` : '');
+  return `<span>Gearbeitet${note}</span><span class="n">${fmt(c.work)} <span class="of" style="font-size:15px">Std.</span></span>`;
+}
 function issuesHtml(e){ const is = issues(e); return is.length ? `<div class="issue">${is.map(esc).join('<br>')}</div>` : ''; }
 function refreshSheetBits(){
   const k = V.sheet; if (!k) return;
   const c = dayCalc(k), cur = patKey(c.e && c.e.b);
   const iss = document.getElementById('issues'); if (iss) iss.innerHTML = issuesHtml(c.e);
   const tot = document.getElementById('total');
-  if (tot) tot.innerHTML = `<span>Total ${c.credit ? '<span class="dim" style="font-size:14px">inkl. ' + fmt(c.credit) + ' ' + TYPES[c.type].label + '</span>' : ''}</span><span class="n">${fmt(c.ist)} <span class="of" style="font-size:15px">Std.</span></span>`;
+  if (tot) tot.innerHTML = totalHtml(c);
   document.querySelectorAll('[data-sug]').forEach(b => b.classList.toggle('on', b.dataset.sug === cur));
   document.querySelectorAll('[data-type]').forEach(b => { const on = c.type === b.dataset.type; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
   if (V.tab === 'week') $('#app').innerHTML = viewWeek();
@@ -1320,13 +1332,13 @@ async function saveFile(name, data, mime){
 async function exportCsv(){
   const y = V.year, r = yearCalc(y);
   const dec = m => (m / 60).toFixed(2).replace('.', ',');
-  const rows = [['Datum','Tag','KW','Zeiten','Arbeitszeit (h)','Abwesenheit','Gutschrift (h)','Total (h)','Notiz']];
+  const rows = [['Datum','Tag','KW','Zeiten','Arbeitszeit (h)','Abwesenheit','Soll (h)','Saldo Tag (h)','Notiz']];
   for (let d = new Date(y, 0, 1); d.getFullYear() === y; d = addDays(d, 1)) {
     const c = dayCalc(K(d));
     if (!c.e && !c.type) continue;
     if (!c.inR) continue;
     rows.push([d.toLocaleDateString('de-CH'), WD[d.getDay()], isoWeek(d), (c.e?.b || []).map(b => b.s + '-' + (b.e || '')).join(' / '),
-      dec(c.work), c.type ? TYPES[c.type].label + (HALF.has(c.type) && c.f === .5 ? ' (halb)' : '') : '', dec(c.credit), dec(c.ist), c.e?.n || '']);
+      dec(c.work), c.type ? TYPES[c.type].label + (HALF.has(c.type) && c.f === .5 ? ' (halb)' : '') : '', dec(c.soll), dec(c.ist - c.soll), c.e?.n || '']);
   }
   rows.push([]); rows.push(['Woche', 'von', 'bis', 'Ist (h)', 'Soll (h)', 'Saldo (h)']);
   r.weeks.forEach(w => rows.push([isoWeek(addDays(w.mon, 3)), w.mon.toLocaleDateString('de-CH'), addDays(w.mon, 6).toLocaleDateString('de-CH'), dec(w.ist), dec(w.soll), w.done ? dec(w.saldo) : 'läuft']));
@@ -1351,14 +1363,14 @@ function printMonth(y, m){
   for (let d = first; d <= last; d = addDays(d, 1)) {
     const c = dayCalc(K(d)), wd = d.getDay(), b = (c.e && c.e.b) || [];
     if (c.inR) { ist += c.ist; soll += c.soll; }
-    if (c.credit) { if (c.type === 'ferien') vac += c.f; if (c.type === 'krank') krank += c.f; if (c.type === 'unfall') unfall += c.f; }
+    vac += c.vacDay; if (c.credit) { if (c.type === 'krank') krank += c.f; if (c.type === 'unfall') unfall += c.f; }
     const iv = b.filter(x => x.s && x.e).map(x => [toMin(x.s), toMin(x.e) || 1440]).sort((p, q) => p[0] - q[0]);
     let pause = 0; for (let i = 1; i < iv.length; i++) pause += Math.max(0, iv[i][0] - iv[i - 1][1]);
     const abs = c.type ? TYPES[c.type].label + (HALF.has(c.type) && c.f === .5 ? ' ½' : '') + (c.type === 'feiertag' && c.holName ? ' (' + c.holName + ')' : '') : '';
     const t = (i, f) => (b[i] && b[i][f]) || '';
     rows += `<tr class="${wd === 0 || wd === 6 ? 'we' : ''}"><td class="n">${pad(d.getDate())}.</td><td class="${wd === 0 ? 'so' : ''}">${WDL[wd]}</td>
       <td>${t(0, 's')}</td><td>${t(0, 'e')}</td><td>${t(1, 's')}</td><td>${t(1, 'e')}</td>
-      <td class="n">${pause ? fmt(pause) : ''}</td><td class="n">${c.work ? fmt(c.work) : ''}</td><td>${esc(abs)}${c.credit ? ' ' + fmt(c.credit) : ''}</td><td>${esc(c.e?.n || '')}${c.e && c.e.c ? ' (korrigiert)' : ''}</td></tr>`;
+      <td class="n">${pause ? fmt(pause) : ''}</td><td class="n">${c.work ? fmt(c.work) : ''}</td><td>${esc(abs)}${c.credit ? ' (Soll −' + fmt(c.credit) + ')' : ''}</td><td>${esc(c.e?.n || '')}${c.e && c.e.c ? ' (korrigiert)' : ''}</td></tr>`;
     if (wd === 0 || K(d) === K(last)) {
       const w = weekCalc(monday(d));
       if (wd === 0) rows += `<tr class="wk"><td colspan="7">Woche ${isoWeek(addDays(monday(d), 3))} (${monday(d).getDate()}.${monday(d).getMonth() + 1}.–${d.getDate()}.${d.getMonth() + 1}.)</td><td class="n">${fmt(w.ist)}</td><td colspan="2">Soll ${fmt(w.soll)}, Saldo ${fmt(w.saldo, true)}</td></tr>`;
@@ -1368,14 +1380,14 @@ function printMonth(y, m){
   const sal = saldoUntil(endK);
   // Ferien: Anspruch des Jahres minus bezogen bis Monatsende
   const yr = yearCalc(y);
-  let vacYear = 0; for (let d = new Date(y, 0, 1); d <= last; d = addDays(d, 1)) { const c = dayCalc(K(d)); if (c.inR && c.credit && c.type === 'ferien') vacYear += c.f; }
+  let vacYear = 0; for (let d = new Date(y, 0, 1); d <= last; d = addDays(d, 1)) { const c = dayCalc(K(d)); if (c.inR) vacYear += c.vacDay; }
   const st = S.settings;
   $('#print').innerHTML = `<h1>Arbeitszeitkontrolle ${MON[m]} ${y}</h1>
   <div class="meta"><span>Name: ${esc(st.name || '______________________________')}</span><span>Sollzeit ${num(st.weekly)} Std. pro Woche</span></div>
   <table><thead><tr><th>Datum</th><th>Tag</th><th>Vorm. kommt</th><th>geht</th><th>Nachm. kommt</th><th>geht</th><th>Pause</th><th>Arbeitszeit</th><th>Abwesenheit</th><th>Bemerkung</th></tr></thead><tbody>${rows}</tbody></table>
   <div class="sum">
-    <span>Soll Arbeitszeit ${MON[m]}</span><span class="n">${fmt(soll)}</span>
-    <span>Ist geleistete Stunden (inkl. Gutschriften)</span><span class="n">${fmt(ist)}</span>
+    <span>Soll Arbeitszeit ${MON[m]} (ohne Ferien, Krankheit, Unfall, Feiertage)</span><span class="n">${fmt(soll)}</span>
+    <span>Ist geleistete Stunden</span><span class="n">${fmt(ist)}</span>
     <span>Differenz Monatsarbeitszeit</span><span class="n">${fmt(ist - soll, true)}</span>
     <span>Ferienbezug ${MON[m]} in Tagen</span><span class="n">${num(vac)}</span>
     <span>Rest Ferienguthaben in Tagen</span><span class="n">${num(yr.vacTotal - vacYear)}</span>
@@ -1383,7 +1395,7 @@ function printMonth(y, m){
     ${unfall ? `<span>Unfalltage ${MON[m]}</span><span class="n">${num(unfall)}</span>` : ''}
     <span class="tot">Arbeitszeitsaldo per ${P(endK).toLocaleDateString('de-CH')}</span><span class="n tot">${fmt(sal, true)}</span>
   </div>
-  <div class="note">Saldo seit ${P(st.start).toLocaleDateString('de-CH')}, Abrechnung pro Woche gegenüber ${num(st.weekly)} Std. Ferien, Krankheit, Unfall und Feiertage mit ${num(st.credit ?? st.weekly / 5)} Std. pro Tag angerechnet.</div>
+  <div class="note">Saldo seit ${P(st.start).toLocaleDateString('de-CH')}, Abrechnung pro Woche gegenüber ${num(st.weekly)} Std. Jeder Ferien-, Kranken- oder Unfalltag senkt das Wochensoll um ${num(st.credit ?? st.weekly / 5)} Std., ebenso ein Feiertag von Mo–Fr. Arbeit an Feiertagen zählt zusätzlich.</div>
   <div class="sign"><div>Datum, Unterschrift Mitarbeiter</div><div>Datum, Unterschrift Vorgesetzter</div></div>`;
   const old = document.title; document.title = `Arbeitszeit_${y}-${pad(m + 1)}${st.name ? '_' + st.name.replace(/\s+/g, '_') : ''}`;
   setTimeout(() => { try { window.print(); } catch(e){} document.title = old; }, 50);

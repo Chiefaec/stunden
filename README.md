@@ -48,6 +48,8 @@ Ab dann öffnet die App immer direkt den heutigen Tag. Ein Name kann nur mit ein
 ## Saldo
 
 Abgerechnet wird die Wochensumme gegenüber 45 Std. Freie Werktage müssen nicht eingetragen werden.
+Jeder Ferien-, Kranken- oder Unfalltag senkt das Wochensoll um 9 Std. (halber Tag 4:30), egal ob Montag oder Samstag. Ein Feiertag von Mo–Fr ebenso. Eine ganze Ferienwoche ergibt Saldo 0. „Ist“ sind immer nur die gearbeiteten Stunden.
+Arbeit an einem Feiertag zählt zusätzlich (Kompensation). Ein freier Samstag ohne Ferien braucht keinen Eintrag; die Woche muss trotzdem 45 Std. ergeben.
 Der angezeigte Saldo gilt bis Ende der letzten fertig eingetragenen Woche. Eine Woche gilt als fertig, wenn sie vorbei ist und bis Freitag oder Samstag eingetragen ist, oder wenn schon spätere Tage eingetragen sind. Die laufende Woche zählt erst, wenn sie fertig ist.
 Ist eine vergangene Woche noch ganz leer, zeigt die App oben einen Hinweis.
 

@@ -1,11 +1,39 @@
 rules_version = '2';
 
-// Firestore-Regeln für die Stunden-App (eigenes Firebase-Projekt).
-// Jedes Konto sieht und ändert nur seine eigenen Daten, alles andere ist gesperrt.
+// Firestore-Regeln für die Stunden-App (Firma mit Chef und Mitarbeitern).
+// - Der Chef (firma/main.chefs) sieht und ändert alles.
+// - Ein Mitarbeiter-Handy sieht und ändert nur die Daten des Mitarbeiters, mit dem es verbunden ist.
+// - Ein Handy kann sich nur mit einem Namen verbinden, der noch frei ist. Ein neues Handy lässt der Chef zu.
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /stunden/{uid}/{document=**} {
-      allow read, write: if request.auth != null && request.auth.uid == uid;
+
+    function signedIn() { return request.auth != null; }
+    function isChef() {
+      return signedIn() && request.auth.uid in get(/databases/$(database)/documents/firma/main).data.chefs;
+    }
+    function isDevice(id) {
+      return signedIn() && get(/databases/$(database)/documents/firma/main/ma/$(id)).data.get('device', null) == request.auth.uid;
+    }
+
+    match /firma/main {
+      allow read: if signedIn();
+      // einmalig beim Einrichten: wer einrichtet, wird Chef
+      allow create: if signedIn() && request.resource.data.chefs == [request.auth.uid];
+      allow update: if isChef();
+    }
+
+    match /firma/main/ma/{id} {
+      allow read: if signedIn();
+      allow create, delete: if isChef();
+      allow update: if isChef()
+        || (signedIn()
+            && resource.data.get('device', null) == null
+            && request.resource.data.device == request.auth.uid
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['device', 'deviceAt']));
+    }
+
+    match /firma/main/ma/{id}/{sub}/{rest=**} {
+      allow read, write: if isChef() || isDevice(id);
     }
   }
 }

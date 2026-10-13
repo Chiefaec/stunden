@@ -1,70 +1,68 @@
 # Stunden – Arbeitszeit
 
-Schlanke Web-App fürs iPhone zur Arbeitszeiterfassung:
+Web-App fürs Handy zur Arbeitszeiterfassung einer Firma:
 
-- Arbeitszeiten pro Tag (Vormittag und Nachmittag), häufige Zeiten mit einem Tipp
-- Abrechnung pro Woche gegenüber der Sollzeit (Standard 45 Std.), Jahressaldo ab 1.1.2026 bei 0
+- Der Chef richtet die App einmal ein (Benutzer z. B. „ChäsLand“) und eröffnet die Mitarbeiter.
+- Jeder Mitarbeiter öffnet die App einmal auf seinem Handy und wählt seinen Namen. Danach ist das Handy fest mit ihm verbunden.
+- Beim Öffnen erscheint immer die aktuelle Woche mit der Eingabe für heute.
+- Abrechnung pro Woche gegenüber 45 Std., Saldo bis Ende der letzten fertig eingetragenen Woche
 - Ferien (25 Tage), Krankheit, Unfall, Feiertage Kanton Thurgau inkl. 1. Mai
-- Saldo und Restferien werden automatisch ins nächste Jahr übertragen
-- Monatsblatt als PDF für den Vorgesetzten (Jahr → „Monatsblatt“)
-- Hinweis auf nicht eingetragene Werktage und auf Tippfehler
-- Speicherung online in Firebase (Firestore), funktioniert auch ohne Netz, plus eine tägliche Kopie
+- Der Chef sieht alle Mitarbeiter mit Saldo und kann Einträge korrigieren (beim Tag markiert)
+- Alle Geräte zeigen dieselben Daten, Änderungen erscheinen sofort überall
+- Monatsblatt als PDF, tägliche Kopie aller Daten
 
-Die Daten liegen in einem eigenen Firebase-Projekt, getrennt von allen anderen Projekten.
+## 1. Firebase (einmalig)
 
-## 1. Firebase-Projekt erstellen (einmalig, ca. 10 Minuten)
+Firebase-Projekt „Stundenerfassung“ (bereits erstellt):
 
-Alles auf console.firebase.google.com, mit demselben Google-Konto wie bisher:
+1. **Authentication → Anmeldemethode**: **Anonym** und **E-Mail/Passwort** aktiviert.
+2. **Firestore Database → Regeln**: den ganzen Inhalt durch `firestore.rules` ersetzen → **Veröffentlichen**. Bei jeder neuen Version dieser Datei wiederholen.
+3. **Authentication → Einstellungen → Autorisierte Domains**: die Vercel-Adresse eintragen (ohne `https://`).
 
-1. **Projekt hinzufügen** → Name z. B. `stunden` → Google Analytics ausschalten → erstellen.
-2. **Web-App registrieren:** auf der Projekt-Startseite das Symbol `</>` tippen → Name `Stunden` → registrieren (Firebase Hosting nicht ankreuzen). Das angezeigte `firebaseConfig`-Objekt kopieren.
-3. Die Werte in `firebase-config.js` einfügen (die `HIER-EINFUEGEN`-Platzhalter ersetzen).
-4. **Authentication** → „Jetzt starten“ → Sign-in method:
-   - **Anonym** aktivieren
-   - **E-Mail/Passwort** aktivieren
-5. **Firestore Database** → „Datenbank erstellen“ → Standort **europe-west6 (Zürich)** → „Im Produktionsmodus starten“.
-6. Firestore Database → **Regeln**: den ganzen Inhalt durch den Inhalt von `firestore.rules` ersetzen → **Veröffentlichen**.
+## 2. GitHub und Vercel
 
-Der kostenlose Spark-Plan reicht. Es ist keine Kreditkarte nötig.
+Alle Dateien dieses Ordners ins Repository laden (bestehende ersetzen). Vercel veröffentlicht automatisch neu.
 
-## 2. Auf GitHub hochladen
+## 3. Einrichten (Chef, einmalig)
 
-1. Auf github.com ein neues Repository anlegen, zum Beispiel `stunden`.
-2. Alle Dateien aus diesem Ordner hochladen („Add file“ → „Upload files“) und speichern.
+1. Die Vercel-Adresse am PC öffnen. Es erscheint **Stunden einrichten**.
+2. Benutzer **ChäsLand**, E-Mail **c.aeschbacher@gmail.com** und ein Passwort (mind. 6 Zeichen) → **Einrichten**.
+3. Unter **Mitarbeiter verwalten** den Mitarbeiter eröffnen, z. B. „Adrian Tritten“, Beginn **13.01.2026**.
+4. Oben bei der Auswahl „Adrian Tritten“ wählen → **Einstellungen** → **Sicherung wiederherstellen** → `Stunden_Import_Jan-Sept_2026.json` wählen. Damit sind alle Stunden seit Januar drin.
 
-## 3. Auf Vercel veröffentlichen
+**Chef auf weiteren PCs oder Handys:** Adresse öffnen → **Als Chef anmelden** → Benutzer „ChäsLand“ (oder die E-Mail-Adresse) und Passwort. Das geht auf beliebig vielen Geräten gleichzeitig.
 
-1. Auf vercel.com → „Add New…“ → „Project“ → das Repository importieren.
-2. Framework Preset: **Other**. Build Command und Output Directory leer lassen → „Deploy“.
-3. Die neue Adresse (z. B. `stunden-xyz.vercel.app`) in Firebase eintragen: **Authentication → Settings → Autorisierte Domains → Domain hinzufügen**.
+**Passwort vergessen:** bei der Anmeldung antippen, der Link kommt an die E-Mail-Adresse des Chefs.
 
-Jede Änderung, die du später auf GitHub speicherst, veröffentlicht Vercel automatisch neu.
+**E-Mail-Adresse ändern:** Übersicht → Einstellungen → E-Mail-Adresse ändern. Es kommt ein Bestätigungslink an die neue Adresse. Nach dem Antippen gilt sie, der Benutzer „ChäsLand“ bleibt gleich.
 
-## 4. Auf dem iPhone installieren
+## 4. Mitarbeiter-Handy (einmalig)
 
-1. Die Vercel-Adresse in **Safari** öffnen.
-2. Teilen-Symbol → **Zum Home-Bildschirm**.
-3. In der App → Einstellungen → **Konto sichern** → E-Mail und Passwort festlegen.
+1. Die Vercel-Adresse in **Safari** öffnen → Teilen → **Zum Home-Bildschirm**.
+2. Die App öffnen → **Wer bist du?** → eigenen Namen antippen → bestätigen.
 
-Ohne Schritt 3 funktioniert die App auch, die Daten sind dann aber an dieses eine Handy gebunden. Solange das Konto nicht gesichert ist, zeigt die App oben einen Hinweis.
+Ab dann öffnet die App immer direkt den heutigen Tag. Ein Name kann nur mit einem Handy verbunden sein.
 
-## So wird gespeichert
+**Neues Handy:** Der Chef tippt in der Übersicht beim Namen auf **Neues Handy zulassen**. Danach auf dem neuen Handy den Namen wählen. Die Daten sind sofort wieder da.
 
-- Die App meldet sich beim ersten Öffnen unsichtbar an. Es gibt keinen Anmeldebildschirm.
-- Jede Änderung wird sofort gespeichert. Ohne Netz bleibt sie auf dem Handy und wird übertragen, sobald wieder Netz da ist.
-- Einmal pro Tag legt die App zusätzlich eine vollständige Kopie ab: `stunden/<konto>/backups/JJJJ-MM-TT` (in der Firebase-Konsole unter Firestore Database einsehbar).
-- **Neues Handy:** App öffnen → Einstellungen → „Ich habe schon ein Konto“ → mit E-Mail und Passwort anmelden.
-- Ist längere Zeit nichts übertragen worden oder schlägt das Speichern fehl, erscheint oben ein roter Hinweis.
+## Saldo
 
-## Monatsblatt
+Abgerechnet wird die Wochensumme gegenüber 45 Std. Freie Werktage müssen nicht eingetragen werden.
+Der angezeigte Saldo gilt bis Ende der letzten fertig eingetragenen Woche. Eine Woche gilt als fertig, wenn sie vorbei ist und bis Freitag oder Samstag eingetragen ist, oder wenn schon spätere Tage eingetragen sind. Die laufende Woche zählt erst, wenn sie fertig ist.
+Ist eine vergangene Woche noch ganz leer, zeigt die App oben einen Hinweis.
 
-Jahr → beim gewünschten Monat auf **Monatsblatt** tippen → im Druckfenster über das Teilen-Symbol als PDF sichern oder direkt drucken. Den Namen für das Blatt trägt man unter Einstellungen ein.
+## Chef
+
+- **Übersicht alle**: alle Mitarbeiter mit Saldo, Wochenstunden, Restferien und offenen Tagen.
+- Oben einen Mitarbeiter wählen: dieselbe Ansicht wie auf seinem Handy. Korrekturen sind beim Tag mit „Korrigiert vom Chef“ markiert, im Monatsblatt mit „(korrigiert)“.
+- Arbeitszeit, Ferien, Feiertage und Beginn pro Mitarbeiter unter **Einstellungen** (Mitarbeiter vorher oben wählen). Mitarbeiter sehen diese Werte nur.
+- **Abmelden** unter Einstellungen.
 
 ## Dateien
 
 | Datei | Zweck |
 |---|---|
 | `index.html` | die ganze App |
-| `firebase-config.js` | Zugangsdaten des Firebase-Projekts (selbst ausfüllen) |
+| `firebase-config.js` | Zugangsdaten des Firebase-Projekts |
 | `firestore.rules` | Sicherheitsregeln für Firestore |
 | `sw.js`, `manifest.webmanifest`, Icons | App-Symbol und Start ohne Netz |

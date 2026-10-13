@@ -1,0 +1,11 @@
+rules_version = '2';
+
+// Firestore-Regeln für die Stunden-App (eigenes Firebase-Projekt).
+// Jedes Konto sieht und ändert nur seine eigenen Daten, alles andere ist gesperrt.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /stunden/{uid}/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+  }
+}

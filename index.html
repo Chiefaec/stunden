@@ -1,0 +1,1099 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Stunden">
+<meta name="theme-color" content="#F2F2F7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>Stunden</title>
+<style>
+:root{
+  --bg:#F2F2F7;--card:#FFFFFF;--card2:#FFFFFF;--sheet:#F2F2F7;--text:#000000;--sec:#6C6C70;--ter:#AEAEB2;
+  --sep:rgba(60,60,67,.18);--fill:rgba(120,120,128,.12);--tab:rgba(249,249,249,.88);
+  --blue:#007AFF;--green:#34C759;--red:#FF3B30;--orange:#FF9500;--teal:#30B0C7;--purple:#AF52DE;--gray:#8E8E93;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#000000;--card:#1C1C1E;--card2:#2C2C2E;--sheet:#1C1C1E;--text:#FFFFFF;--sec:#98989F;--ter:#5A5A5E;
+  --sep:rgba(84,84,88,.6);--fill:rgba(118,118,128,.24);--tab:rgba(22,22,24,.88);
+  --blue:#0A84FF;--green:#30D158;--red:#FF453A;--orange:#FF9F0A;--teal:#40C8E0;--purple:#BF5AF2;--gray:#8E8E93;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#000000;--card:#1C1C1E;--card2:#2C2C2E;--sheet:#1C1C1E;--text:#FFFFFF;--sec:#98989F;--ter:#5A5A5E;
+  --sep:rgba(84,84,88,.6);--fill:rgba(118,118,128,.24);--tab:rgba(22,22,24,.88);
+  --blue:#0A84FF;--green:#30D158;--red:#FF453A;--orange:#FF9F0A;--teal:#40C8E0;--purple:#BF5AF2;--gray:#8E8E93;color-scheme:dark}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%}
+body{margin:0;min-height:100%;background:var(--bg);color:var(--text);
+  font:17px/1.3 -apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums;-webkit-tap-highlight-color:transparent}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+main{max-width:560px;margin:0 auto;padding:6px 16px 112px}
+
+/* header */
+.top{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin:10px 4px 16px;min-height:60px}
+.top .tbtn{position:absolute}
+h1{font-size:34px;font-weight:700;letter-spacing:.2px;margin:0;line-height:1.1}
+.sub{color:var(--sec);font-size:15px;margin-top:3px}
+.navs{display:flex;gap:8px;align-items:center}
+.chev{width:34px;height:34px;border-radius:17px;background:var(--fill);border:0;color:var(--blue);display:grid;place-items:center;padding:0}
+.chev svg{width:15px;height:15px}
+.link{background:none;border:0;color:var(--blue);font-size:17px;padding:6px 2px}
+
+/* hero */
+.hero{background:var(--card);border-radius:14px;padding:18px 18px 16px}
+.hero-num{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.big{font-size:56px;font-weight:600;letter-spacing:-1.5px;line-height:1}
+.of{color:var(--sec);font-size:17px}
+.hero-foot{display:flex;justify-content:space-between;align-items:center;margin-top:14px;font-size:15px;color:var(--sec)}
+.pill{display:inline-block;font-weight:600;font-size:15px;padding:3px 9px;border-radius:8px}
+.pos{color:var(--green)} .neg{color:var(--red)} .zero{color:var(--sec)}
+.pill.pos{background:color-mix(in srgb,var(--green) 15%,transparent)}
+.pill.neg{background:color-mix(in srgb,var(--red) 14%,transparent)}
+.pill.zero{background:var(--fill)}
+.bar{height:6px;border-radius:3px;background:var(--fill);margin-top:14px;overflow:hidden}
+.bar i{display:block;height:100%;border-radius:3px;background:var(--blue);transition:width .4s}
+
+/* stamp */
+.stamp{display:flex;align-items:center;gap:14px;width:100%;margin-top:12px;padding:14px 16px;border:0;border-radius:14px;background:var(--blue);color:#fff;text-align:left}
+.stamp.out{background:var(--card);color:var(--text)}
+.stamp .ic{width:40px;height:40px;border-radius:20px;background:rgba(255,255,255,.22);display:grid;place-items:center;flex:none}
+.stamp.out .ic{background:color-mix(in srgb,var(--red) 15%,transparent);color:var(--red)}
+.stamp b{display:block;font-size:17px;font-weight:600}
+.stamp small{font-size:14px;opacity:.85}
+.stamp.out small{color:var(--sec);opacity:1}
+.live{width:8px;height:8px;border-radius:4px;background:var(--red);display:inline-block;margin-right:6px;animation:pulse 1.6s infinite}
+@keyframes pulse{50%{opacity:.3}}
+@media (prefers-reduced-motion:reduce){.live{animation:none}.sheet,.scrim,.bar i{transition:none!important}}
+
+/* lists */
+.sect{font-size:13px;color:var(--sec);margin:24px 16px 7px;display:flex;justify-content:space-between}
+.list{background:var(--card);border-radius:12px;overflow:hidden}
+.sheet .list{background:var(--card2)}
+.row{display:flex;align-items:center;gap:12px;padding:10px 16px;min-height:46px;width:100%;background:none;border:0;text-align:left;position:relative}
+.row+.row::before{content:"";position:absolute;top:0;left:var(--inset,16px);right:0;height:.5px;background:var(--sep)}
+button.row:active{background:var(--fill)}
+.grow{flex:1;min-width:0}
+.l1{font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.l2{font-size:14px;color:var(--sec);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+.right{text-align:right;flex:none}
+.right .h{font-size:17px;font-weight:500}
+.right .s{font-size:13px;margin-top:1px}
+.dim{color:var(--ter)}
+.chevr{color:var(--ter);flex:none;width:8px}
+.date{width:40px;flex:none;text-align:center}
+.date .dw{font-size:12px;color:var(--sec);font-weight:500}
+.date .dn{font-size:20px;font-weight:500;width:34px;height:34px;line-height:34px;margin:1px auto 0;border-radius:17px}
+.today .dn{background:var(--blue);color:#fff;font-weight:600}
+.we .dw{color:var(--ter)}
+.tag{font-weight:500}
+.prestart{opacity:.45}
+
+/* year */
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.stat{background:var(--card);border-radius:14px;padding:14px 16px}
+.stat.wide{grid-column:1/-1}
+.stat .n{font-size:28px;font-weight:600;letter-spacing:-.5px}
+.stat .lb{font-size:14px;color:var(--sec);margin-top:2px}
+.dot{width:10px;height:10px;border-radius:5px;display:inline-block;flex:none}
+
+/* settings */
+.field{display:flex;align-items:center;gap:12px;padding:8px 16px;min-height:46px;position:relative}
+.field+.field::before{content:"";position:absolute;top:0;left:16px;right:0;height:.5px;background:var(--sep)}
+.field label{flex:1}
+.field input[type=number],.field input[type=text],.field input[type=date]{font:inherit;border:0;background:none;color:var(--sec);text-align:right;width:120px;padding:4px 0}
+.field input[type=date]{width:auto;color:var(--blue)}
+.days{display:flex;gap:6px;padding:10px 16px 12px;flex-wrap:wrap}
+.dchip{width:38px;height:38px;border-radius:19px;border:0;background:var(--fill);font-size:14px;font-weight:500}
+.dchip.on{background:var(--blue);color:#fff}
+.sw{position:relative;width:51px;height:31px;flex:none}
+.sw input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+.sw span{position:absolute;inset:0;border-radius:16px;background:var(--fill);transition:background .2s;pointer-events:none}
+.sw span::after{content:"";position:absolute;top:2px;left:2px;width:27px;height:27px;border-radius:14px;background:#fff;box-shadow:0 3px 8px rgba(0,0,0,.15),0 1px 1px rgba(0,0,0,.16);transition:transform .2s}
+.sw input:checked+span{background:var(--green)}
+.sw input:checked+span::after{transform:translateX(20px)}
+.foot{font-size:13px;color:var(--sec);margin:7px 16px 0;line-height:1.4}
+.danger{color:var(--red)}
+.action{color:var(--blue)}
+
+/* tabbar */
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:10;display:flex;justify-content:center;
+  padding:6px 0 calc(4px + env(safe-area-inset-bottom,0px));background:var(--tab);
+  -webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);border-top:.5px solid var(--sep)}
+.tabbar .in{display:flex;max-width:560px;width:100%}
+.tab{flex:1;background:none;border:0;color:var(--gray);font-size:10px;font-weight:500;display:flex;flex-direction:column;align-items:center;gap:2px;padding:2px 0}
+.tab svg{width:26px;height:26px}
+.tab.on{color:var(--blue)}
+
+/* sheet */
+.sheet-wrap{position:fixed;inset:0;z-index:30;pointer-events:none}
+.scrim{position:absolute;inset:0;background:rgba(0,0,0,.4);opacity:0;transition:opacity .28s}
+.sheet{position:absolute;left:0;right:0;bottom:0;max-width:560px;margin:0 auto;
+  max-height:calc(100% - 44px - env(safe-area-inset-top,0px));background:var(--sheet);border-radius:14px 14px 0 0;
+  transform:translateY(105%);transition:transform .34s cubic-bezier(.32,.72,0,1);overflow:auto;overscroll-behavior:contain;
+  padding:0 16px calc(28px + env(safe-area-inset-bottom,0px))}
+.sheet-wrap.open{pointer-events:auto}
+.sheet-wrap.open .scrim{opacity:1}
+.sheet-wrap.open .sheet{transform:none}
+.sh-head{position:sticky;top:0;z-index:2;background:var(--sheet);display:flex;align-items:center;justify-content:space-between;padding:16px 0 10px}
+.sh-head h2{font-size:20px;font-weight:600;margin:0}
+.sh-head .link{font-weight:600}
+.hint{font-size:14px;color:var(--purple);margin:-4px 0 4px}
+.types{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.type{display:flex;align-items:center;justify-content:center;gap:7px;padding:11px 6px;border:0;border-radius:11px;background:var(--card2);font-size:15px;font-weight:500}
+.type.on{background:var(--c);color:#fff}
+.type.on .dot{background:#fff!important}
+.seg{display:flex;background:var(--fill);border-radius:9px;padding:2px;margin-top:12px}
+.seg button{flex:1;border:0;background:none;font-size:14px;font-weight:500;padding:7px;border-radius:7px}
+.seg .on{background:var(--card2);box-shadow:0 3px 8px rgba(0,0,0,.12),0 3px 1px rgba(0,0,0,.04)}
+.blk{display:flex;align-items:center;gap:8px;padding:9px 12px 9px 16px;position:relative}
+.blk+.blk::before,.add::before{content:"";position:absolute;top:0;left:16px;right:0;height:.5px;background:var(--sep)}
+.blk input[type=time]{font:inherit;font-size:19px;font-weight:500;border:0;background:var(--fill);color:var(--text);border-radius:8px;padding:6px 8px;min-width:96px;text-align:center;-webkit-appearance:none;appearance:none}
+.blk .dash{color:var(--sec)}
+.blk .dur{flex:1;text-align:right;color:var(--sec);font-size:15px}
+.rm{width:30px;height:30px;border:0;border-radius:15px;background:none;color:var(--red);display:grid;place-items:center;flex:none;padding:0}
+.add{position:relative;display:flex;align-items:center;gap:10px;width:100%;padding:12px 16px;border:0;background:none;color:var(--blue);text-align:left}
+textarea{width:100%;font:inherit;border:0;background:var(--card2);color:var(--text);border-radius:12px;padding:12px 16px;resize:none;min-height:46px}
+.del{width:100%;margin-top:24px;padding:13px;border:0;border-radius:12px;background:var(--card2);color:var(--red);font-weight:500}
+/* simple entry */
+.daynav{display:flex;align-items:center;gap:6px}
+.sugs{display:grid;gap:8px;margin-top:4px}
+.sug{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;padding:14px 16px;border:0;border-radius:12px;background:var(--card2);text-align:left;font-size:17px}
+.sug b{font-weight:600}
+.sug.on{background:var(--blue);color:#fff}
+.sug.on .dim{color:rgba(255,255,255,.8)}
+.slot{display:flex;align-items:center;gap:10px;padding:10px 12px 10px 16px;position:relative}
+.slot+.slot::before,.picker::before{content:"";position:absolute;top:0;left:16px;right:0;height:.5px;background:var(--sep)}
+.slot .nm{width:96px;flex:none;font-size:15px;color:var(--sec)}
+.tw{flex:1;min-width:0;position:relative;display:block}
+.tw .ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--ter);font-size:18px;pointer-events:none}
+.tin:valid+.ph{display:none}
+.tin:invalid{color:transparent}
+.tin::-webkit-date-and-time-value{text-align:center}
+.tin{display:block;min-height:48px;min-width:0;width:100%;font:inherit;font-size:22px;font-weight:600;padding:9px 0;border:0;border-radius:10px;background:var(--fill);color:var(--text);text-align:center;-webkit-appearance:none;appearance:none}
+.tin::placeholder{color:var(--ter);font-weight:400;font-size:18px}
+.tin:focus{outline:2px solid var(--blue);outline-offset:0;background:var(--card2)}
+.tin.bad{outline:2px solid var(--red);outline-offset:0}
+.tbtn{flex:1;font-size:22px;font-weight:600;padding:9px 0;border:0;border-radius:10px;background:var(--fill);text-align:center}
+.tbtn.empty{color:var(--ter);font-weight:400}
+.tbtn.act{background:var(--blue);color:#fff}
+.slot .dash{color:var(--sec)}
+.picker{position:relative;padding:12px 16px 14px}
+.picker .lbl{font-size:13px;color:var(--sec);margin:0 0 6px}
+.grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.grid.m{grid-template-columns:repeat(4,1fr)}
+.grid button{padding:11px 0;border:0;border-radius:9px;background:var(--fill);font-size:17px;font-weight:500}
+.grid button.on{background:var(--blue);color:#fff}
+.pk-foot{display:flex;justify-content:space-between;margin-top:10px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:flex;align-items:center;gap:7px;padding:10px 14px;border:0;border-radius:20px;background:var(--card2);font-size:16px;font-weight:500}
+.chip.on{background:var(--c);color:#fff}
+.chip.on .dot{background:#fff!important}
+.total{display:flex;justify-content:space-between;align-items:baseline;background:var(--card2);border-radius:12px;padding:14px 16px;margin-top:20px}
+.total .n{font-size:28px;font-weight:600}
+.cta{display:flex;align-items:center;justify-content:space-between;width:100%;margin-top:12px;padding:16px 18px;border:0;border-radius:14px;background:var(--blue);color:#fff;font-size:17px;font-weight:600;text-align:left}
+.cta small{display:block;font-weight:400;font-size:14px;opacity:.85;margin-top:2px}
+.todo{color:var(--blue)}
+.banner{display:flex;align-items:center;gap:12px;width:100%;margin-top:10px;padding:12px 14px;border:0;border-radius:14px;background:var(--card);text-align:left}
+.banner b{display:block;font-weight:600;font-size:16px}
+.banner small{display:block;color:var(--sec);font-size:14px;margin-top:1px}
+.bi{width:26px;height:26px;border-radius:13px;color:#fff;font-weight:700;display:grid;place-items:center;flex:none;font-size:15px}
+.issue{margin-top:12px;padding:11px 14px;border-radius:12px;background:color-mix(in srgb,var(--orange) 14%,transparent);color:var(--text);font-size:15px;line-height:1.4}
+.warn-t{color:var(--orange);font-weight:500}
+.mlink{background:none;border:0;color:var(--blue);font-size:13px;padding:0}
+.sect .mlink{margin-left:auto}
+#print{display:none}
+@media print{
+  @page{size:A4 portrait;margin:12mm}
+  body{background:#fff!important;color:#000!important}
+  body>*:not(#print){display:none!important}
+  #print{display:block!important;font:9.5pt/1.25 -apple-system,"Helvetica Neue",Arial,sans-serif;color:#000}
+  #print h1{font-size:16pt;margin:0 0 2mm;letter-spacing:0}
+  #print .meta{display:flex;justify-content:space-between;margin-bottom:4mm;font-size:10pt}
+  #print table{width:100%;border-collapse:collapse}
+  #print th{background:#2F5E8C;color:#fff;font-weight:500;padding:1.4mm 1.5mm;border:.3pt solid #2F5E8C;text-align:left;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  #print td{border:.3pt solid #888;padding:1.1mm 1.5mm;height:5.2mm}
+  #print td.n{text-align:right;font-variant-numeric:tabular-nums}
+  #print tr.we td{background:#EFEFEF;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  #print tr.wk td{background:#fff;border-top:.8pt solid #000;font-weight:600;font-size:8.5pt}
+  #print .so{color:#C0392B}
+  #print .sum{display:grid;grid-template-columns:1fr auto;gap:1mm 10mm;width:62%;margin-top:5mm;font-size:10pt}
+  #print .sum .n{text-align:right;font-variant-numeric:tabular-nums}
+  #print .sum .tot{font-weight:700;border-top:.8pt solid #000;padding-top:1mm}
+  #print .sign{display:grid;grid-template-columns:1fr 1fr;gap:14mm;margin-top:14mm;font-size:9pt}
+  #print .sign div{border-top:.5pt solid #000;padding-top:1.5mm}
+  #print .note{font-size:8pt;color:#444;margin-top:3mm}
+}
+.empty{padding:28px 16px;text-align:center;color:var(--sec);font-size:15px}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<div id="print"></div>
+
+<nav class="tabbar" aria-label="Ansichten">
+  <div class="in">
+    <button class="tab" data-tab="week">
+      <svg viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3.5" y="5" width="19" height="17" rx="3.5"/><path d="M3.5 10.5h19M8.5 3v4M17.5 3v4"/></svg>
+      Woche</button>
+    <button class="tab" data-tab="year">
+      <svg viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 21V13M10.3 21V7M15.7 21v-9M21 21V4"/></svg>
+      Jahr</button>
+    <button class="tab" data-tab="settings">
+      <svg viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7.5h11M19 7.5h3M4 18.5h3M11 18.5h11"/><circle cx="17" cy="7.5" r="2.3"/><circle cx="9" cy="18.5" r="2.3"/></svg>
+      Einstellungen</button>
+  </div>
+</nav>
+
+<div class="sheet-wrap" id="wrap">
+  <div class="scrim" data-act="close"></div>
+  <div class="sheet" id="sheet" role="dialog" aria-modal="true"></div>
+</div>
+
+<script>
+// wird vom Firebase-Modul unten erfüllt (nur auf Vercel)
+window.fbReady = new Promise(r => { window.__fbResolve = r; setTimeout(() => r({ error: 'Firebase konnte nicht geladen werden. Internetverbindung prüfen.' }), 15000); });
+</script>
+<script type="module" data-firebase>
+const V_ = '12.19.0', base = 'https://www.gstatic.com/firebasejs/' + V_ + '/';
+(async () => {
+  try {
+    if (window.claude && window.claude.use) return; // in Claude nicht nötig
+    const { firebaseConfig } = await import('./firebase-config.js');
+    if (!firebaseConfig || !firebaseConfig.apiKey || /HIER/.test(firebaseConfig.apiKey)) return window.__fbResolve({ error: 'Firebase ist noch nicht eingerichtet: firebase-config.js ausfüllen' });
+    const [{ initializeApp }, A, F] = await Promise.all([import(base + 'firebase-app.js'), import(base + 'firebase-auth.js'), import(base + 'firebase-firestore.js')]);
+    const app = initializeApp(firebaseConfig, 'stunden');
+    const auth = A.getAuth(app);
+    let fs;
+    try { fs = F.initializeFirestore(app, { localCache: F.persistentLocalCache({ tabManager: F.persistentMultipleTabManager() }) }); }
+    catch (e) { fs = F.getFirestore(app); }
+    const db = { collection: p => ({ doc: id => {
+      const ref = F.doc(fs, p, id);
+      return {
+        get: async () => { const s = await F.getDoc(ref); return { exists: s.exists(), data: () => s.data() }; },
+        set: d => F.setDoc(ref, d)
+      };
+    } }) };
+    const user = await new Promise(res => { const off = A.onAuthStateChanged(auth, u => { off(); res(u); }); });
+    let u = user;
+    if (!u) { try { u = (await A.signInAnonymously(auth)).user; } catch (e) { return window.__fbResolve({ error: e.code === 'auth/admin-restricted-operation' ? 'Anonyme Anmeldung ist in Firebase nicht aktiviert (siehe Anleitung)' : e.code === 'auth/network-request-failed' ? 'Keine Internetverbindung beim ersten Start' : 'Anmeldung fehlgeschlagen: ' + (e.code || e.message) }); } }
+    const api = {
+      db, uid: u.uid, isAnon: u.isAnonymous, email: u.email || '',
+      async link(email, pw) {
+        const cred = A.EmailAuthProvider.credential(email, pw);
+        const r = await A.linkWithCredential(auth.currentUser, cred);
+        api.isAnon = false; api.email = r.user.email || email; return r.user.uid;
+      },
+      async signIn(email, pw) {
+        const r = await A.signInWithEmailAndPassword(auth, email, pw);
+        api.uid = r.user.uid; api.isAnon = false; api.email = r.user.email || email; return r.user.uid;
+      },
+      reset: email => A.sendPasswordResetEmail(auth, email)
+    };
+    window.__fbResolve(api);
+  } catch (e) {
+    window.__fbResolve({ error: 'Firebase konnte nicht gestartet werden: ' + (e && (e.code || e.message)) });
+  }
+})();
+</script>
+<script>
+/* ---------- helpers ---------- */
+const $ = s => document.querySelector(s);
+const pad = n => String(n).padStart(2, '0');
+const K = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+const P = k => { const [a, b, c] = k.split('-').map(Number); return new Date(a, b - 1, c); };
+const addDays = (d, n) => { const x = new Date(d.getFullYear(), d.getMonth(), d.getDate()); x.setDate(x.getDate() + n); return x; };
+const monday = d => addDays(d, -((d.getDay() + 6) % 7));
+function isoWeek(d){ const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())); const day = t.getUTCDay() || 7; t.setUTCDate(t.getUTCDate() + 4 - day); const y0 = new Date(Date.UTC(t.getUTCFullYear(), 0, 1)); return Math.ceil(((t - y0) / 864e5 + 1) / 7); }
+const toMin = s => { if (!s) return null; const [h, m] = s.split(':').map(Number); return isNaN(h) ? null : h * 60 + (m || 0); };
+const fromMin = m => pad(Math.floor(((m % 1440) + 1440) % 1440 / 60)) + ':' + pad(((m % 60) + 60) % 60);
+function fmt(m, sign){ const neg = m < -0.5; const a = Math.round(Math.abs(m)); const s = Math.floor(a / 60) + ':' + pad(a % 60); if (!sign) return (neg ? '−' : '') + s; return (neg ? '−' : a === 0 ? '±' : '+') + s; }
+const cls = m => Math.round(m) > 0 ? 'pos' : Math.round(m) < 0 ? 'neg' : 'zero';
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const num = n => (Math.round(n * 2) / 2).toString().replace('.', ',');
+const WD = ['So','Mo','Di','Mi','Do','Fr','Sa'];
+const WDL = ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
+const MON = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+const MS = ['Jan.','Feb.','März','Apr.','Mai','Juni','Juli','Aug.','Sept.','Okt.','Nov.','Dez.'];
+const chevL = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3 5 8l5 5"/></svg>';
+const chevR = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 3 5 5-5 5"/></svg>';
+const chevS = '<svg class="chevr" viewBox="0 0 8 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m1 1 6 6-6 6"/></svg>';
+let TODAY = K(new Date());
+// true, wenn die App in Claude läuft (dort speichert das Claude-Konto), false auf Vercel
+const HOSTED = !!(window.claude && window.claude.use);
+
+const TYPES = {
+  arbeit:   { label: 'Arbeit',   c: 'var(--blue)' },
+  ferien:   { label: 'Ferien',   c: 'var(--teal)' },
+  krank:    { label: 'Krank',    c: 'var(--orange)' },
+  unfall:   { label: 'Unfall',   c: 'var(--red)' },
+  feiertag: { label: 'Feiertag', c: 'var(--purple)' },
+  frei:     { label: 'Frei',     c: 'var(--gray)' }
+};
+const HALF = new Set(['ferien', 'krank', 'unfall']);
+
+/* ---------- holidays (Schweiz) ---------- */
+function easter(y){ const a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451),mo=Math.floor((h+l-7*m+114)/31),da=((h+l-7*m+114)%31)+1; return new Date(y, mo - 1, da); }
+const HOL = [
+  ['neujahr','Neujahr',y=>new Date(y,0,1),true],
+  ['berchtold','Berchtoldstag',y=>new Date(y,0,2),true],
+  ['karfreitag','Karfreitag',y=>addDays(easter(y),-2),true],
+  ['ostermontag','Ostermontag',y=>addDays(easter(y),1),true],
+  ['arbeit','Tag der Arbeit',y=>new Date(y,4,1),true],
+  ['auffahrt','Auffahrt',y=>addDays(easter(y),39),true],
+  ['pfingst','Pfingstmontag',y=>addDays(easter(y),50),true],
+  ['fron','Fronleichnam',y=>addDays(easter(y),60),false],
+  ['bundes','Bundesfeier',y=>new Date(y,7,1),true],
+  ['maria','Mariä Himmelfahrt',y=>new Date(y,7,15),false],
+  ['allerheiligen','Allerheiligen',y=>new Date(y,10,1),false],
+  ['empf','Mariä Empfängnis',y=>new Date(y,11,8),false],
+  ['weihn','Weihnachten',y=>new Date(y,11,25),true],
+  ['stephan','Stephanstag',y=>new Date(y,11,26),true]
+];
+let holCache = {};
+function holidays(y){
+  if (holCache[y]) return holCache[y];
+  const m = {}; HOL.forEach(([id, name, fn]) => { if (S.settings.hol[id]) m[K(fn(y))] = name; });
+  return holCache[y] = m;
+}
+
+/* ---------- state ---------- */
+const now0 = new Date();
+const DEF = { weekly: 45, credit: 9, vacation: 25,
+  start: '2026-01-01',
+  hol: Object.fromEntries(HOL.map(h => [h[0], h[3]])), carry: {} };
+function lsGet(k){ try { const v = localStorage.getItem('stunden:' + k); return v ? JSON.parse(v) : null; } catch(e){ return null; } }
+function lsSet(k, v){ try { localStorage.setItem('stunden:' + k, JSON.stringify(v)); } catch(e){} }
+const S = { settings: Object.assign({}, DEF, lsGet('settings') || {}), years: {} };
+S.settings.hol = Object.assign({}, DEF.hol, S.settings.hol || {});
+S.settings.carry = S.settings.carry || {};
+// Umstellung auf Kanton Thurgau, Saldo startet am 1.1.2026 bei 0
+function migrate(st){
+  if ((st.v || 0) >= 2) return false;
+  st.start = '2026-01-01';
+  st.hol = Object.fromEntries(HOL.map(h => [h[0], h[3]]));
+  st.carry = {};
+  st.v = 2; return true;
+}
+if (migrate(S.settings)) lsSet('settings', S.settings);
+const V = { acct: null, acctVals: {}, acctMsg: '', pick: null, tab: 'week', week: monday(new Date()), year: now0.getFullYear(), sheet: null };
+
+function ensureYear(y){
+  y = String(y);
+  if (!S.years[y]) { S.years[y] = lsGet('y' + y) || { days: {} }; if (!S.years[y].days) S.years[y].days = {}; if (db && uid) syncYear(y).then(render); }
+  return S.years[y];
+}
+function getEntry(k, create){
+  const days = ensureYear(k.slice(0, 4)).days;
+  if (!days[k] && create) days[k] = { b: [] };
+  return days[k] || null;
+}
+function commit(k){
+  const y = k.slice(0, 4), days = ensureYear(y).days, e = days[k];
+  if (e) {
+    if (!HALF.has(e.a)) delete e.f;
+    if (!e.n) delete e.n;
+    if (!(e.b && e.b.length) && !e.a && !e.n) delete days[k];
+  }
+  persist('y' + y);
+}
+
+/* ---------- calculation ---------- */
+function dayCalc(k){
+  const d = P(k), st = S.settings, e = getEntry(k), wd = d.getDay();
+  const inR = k >= st.start, weekday = wd >= 1 && wd <= 5;
+  // Wochensoll wird auf Mo–Fr verteilt; nur für angebrochene Wochen relevant (Erfassungsbeginn, Jahreswechsel)
+  const soll = inR && weekday ? st.weekly * 60 / 5 : 0;
+  const holName = holidays(d.getFullYear())[k] || null;
+  const auto = !(e && e.a) && !!holName;
+  const type = e && e.a ? (e.a === 'arbeit' ? null : e.a) : (holName ? 'feiertag' : null);
+  let work = 0;
+  (e && e.b || []).forEach(b => { const a = toMin(b.s); let z = toMin(b.e); if (a == null || z == null) return; if (z === 0) z = 1440; if (z > a) work += z - a; });
+  const f = (e && e.f) || 1, cr = (st.credit ?? st.weekly / 5) * 60;
+  let credit = 0;
+  if (inR) { if (type === 'feiertag') credit = auto && !weekday ? 0 : cr; else if (HALF.has(type)) credit = cr * f; }
+  return { k, d, e, soll, type, holName, work, credit, f, ist: work + credit, inR };
+}
+function weekCalc(mon, y){
+  let ist = 0, soll = 0, any = false;
+  for (let i = 0; i < 7; i++) {
+    const d = addDays(mon, i); if (y != null && d.getFullYear() !== y) continue;
+    const c = dayCalc(K(d)); ist += c.ist; soll += c.soll; if (c.inR) any = true;
+  }
+  const done = K(addDays(mon, 6)) < TODAY;
+  return { mon, ist, soll, saldo: ist - soll, done, any, current: K(mon) <= TODAY && !done };
+}
+function yearCalc(y){
+  y = +y; ensureYear(y);
+  let vac = 0, krank = 0, unfall = 0, feier = 0;
+  for (let d = new Date(y, 0, 1); d.getFullYear() === y; d = addDays(d, 1)) {
+    const c = dayCalc(K(d)); if (!c.inR) continue;
+    if (c.type === 'ferien') vac += c.f;
+    if (c.type === 'krank') krank += c.f;
+    if (c.type === 'unfall') unfall += c.f;
+    if (c.type === 'feiertag' && c.credit) feier += 1;
+  }
+  const weeks = []; let saldo = 0, cur = null;
+  for (let m = monday(new Date(y, 0, 1)); m.getFullYear() <= y && K(m) <= y + '-12-31'; m = addDays(m, 7)) {
+    const w = weekCalc(m, y); if (!w.any) continue;
+    if (w.done) saldo += w.saldo; if (w.current) cur = w;
+    if (w.done || w.current) weeks.push(w);
+  }
+  // Übertrag aus dem Vorjahr automatisch (Saldo und nicht bezogene Ferien)
+  const sy = +S.settings.start.slice(0, 4);
+  let cS = 0, cV = 0;
+  if (y > sy) { const p = yearCalc(y - 1); cS = p.saldo; cV = p.vacTotal - p.vacUsed; }
+  return { saldo: saldo + cS, carrySaldo: cS, carryVac: cV, vacUsed: vac, vacTotal: S.settings.vacation + cV, krank, unfall, feier, weeks, cur };
+}
+
+/* ---------- persistence: account db with local fallback ---------- */
+let db = null, uid = null, dl = null, saveT = null, FB = null;
+// Speicherort: in Claude das Claude-Konto, auf Vercel das eigene Firebase-Projekt
+const col = () => HOSTED ? 'data/users/' + uid : 'stunden/' + uid + '/data';
+const clean = d => JSON.parse(JSON.stringify(d, (k, v) => (k === 'cloudKey' || k === 'cloudLast' || k === 'cloudAt') ? undefined : v));
+let pending = 0, mergeLocal = false;
+function syncDone(){ if (--pending <= 0) { pending = 0; lsSet('cloudDirty', false); lsSet('syncAt', new Date().toISOString()); } }
+const dirty = new Set(), loaded = new Set();
+function persist(name){
+  lsSet(name, name === 'settings' ? S.settings : S.years[name.slice(1)]);
+  if (!HOSTED) lsSet('cloudDirty', true);
+  dirty.add(name); clearTimeout(saveT); saveT = setTimeout(flush, 700);
+}
+async function flush(){
+  if (!db || !uid) return;
+  const names = [...dirty]; dirty.clear();
+  for (const n of names) {
+    const data = n === 'settings' ? S.settings : S.years[n.slice(1)];
+    if (!data) continue;
+    if (FB) {
+      // Firebase speichert sofort offline und überträgt, sobald Netz da ist
+      pending++;
+      db.collection(col()).doc(n).set(clean(data)).then(() => { if (cloud.err) { cloud.err = ''; softRender(); } syncDone(); })
+        .catch(err => { pending = Math.max(0, pending - 1); cloud.err = fbMsg(err); softRender(); });
+      continue;
+    }
+    try { await db.collection(col()).doc(n).set(JSON.parse(JSON.stringify(data))); }
+    catch (err) { if (!err || err.code === 'unavailable') { dirty.add(n); setTimeout(flush, 1500 + Math.random() * 1500); } }
+  }
+}
+async function syncYear(y){
+  if (!db || !uid || loaded.has(y)) return; loaded.add(y);
+  try {
+    const snap = await db.collection(col()).doc('y' + y).get();
+    if (snap.exists) {
+      const d = snap.data(), local = (S.years[y] && S.years[y].days) || {};
+      // nach Anmeldung auf neuem Gerät: lokale Tage behalten, die online noch fehlen
+      // nicht übertragene Änderungen (z. B. ohne Netz gemacht) haben Vorrang
+      const localWins = !HOSTED && lsGet('cloudDirty');
+      const extra = mergeLocal ? Object.keys(local).filter(k => !(d.days || {})[k]) : [];
+      S.years[y] = { days: localWins ? Object.assign({}, d.days || {}, local) : Object.assign({}, mergeLocal ? local : {}, d.days || {}) };
+      lsSet('y' + y, S.years[y]);
+      if (extra.length || localWins) { dirty.add('y' + y); flush(); }
+    }
+    else if (S.years[y] && Object.keys(S.years[y].days).length) { dirty.add('y' + y); flush(); }
+  } catch(e){ loaded.delete(y); }
+}
+async function loadAll(){
+  try {
+    const snap = await db.collection(col()).doc('settings').get();
+    if (snap.exists && !(!HOSTED && lsGet('cloudDirty'))) { const r = snap.data(); const keep = { lastBackup: S.settings.lastBackup }; S.settings = Object.assign({}, DEF, r, { hol: Object.assign({}, DEF.hol, r.hol || {}), carry: r.carry || {} }); if (!S.settings.lastBackup) S.settings.lastBackup = keep.lastBackup; if (migrate(S.settings)) dirty.add('settings'); lsSet('settings', S.settings); holCache = {}; }
+    else dirty.add('settings');
+  } catch(e){}
+  loaded.clear();
+  const ys = new Set(Object.keys(S.years).concat(String(now0.getFullYear())));
+  for (const y of ys) await syncYear(y);
+  mergeLocal = false;
+  flush();
+}
+async function connect(){
+  try {
+    if (HOSTED) {
+      const [d, u, w] = await Promise.all([claude.use('db'), claude.use('user'), claude.use('downloads')]);
+      dl = w;
+      uid = u ? await u.id() : null;
+      if (d && uid) { db = d; await loadAll(); }
+    } else {
+      FB = await (window.fbReady || Promise.resolve(null));
+      if (FB && FB.uid) {
+        db = FB.db; uid = FB.uid;
+        await loadAll();
+        dailyCopy();
+      } else cloud.err = (FB && FB.error) || 'Firebase ist noch nicht eingerichtet';
+    }
+    render();
+  } catch(e){ render(); }
+}
+/* tägliche Kopie aller Daten als eigenes Dokument (stunden/<konto>/backups/JJJJ-MM-TT) */
+function dailyCopy(){
+  if (!FB || !uid) return;
+  const day = K(new Date());
+  if (lsGet('copyDay') === day) return;
+  db.collection('stunden/' + uid + '/backups').doc(day).set(clean(snapshot())).then(() => lsSet('copyDay', day)).catch(() => {});
+}
+function fbMsg(e){
+  const c = (e && e.code) || '';
+  const m = {
+    'permission-denied': 'Zugriff verweigert: Firestore-Regeln prüfen (siehe Anleitung)',
+    'unavailable': 'Keine Internetverbindung',
+    'auth/network-request-failed': 'Keine Internetverbindung',
+    'auth/email-already-in-use': 'Diese E-Mail hat schon ein Konto. Tippe auf „Ich habe schon ein Konto“.',
+    'auth/credential-already-in-use': 'Diese E-Mail hat schon ein Konto. Tippe auf „Ich habe schon ein Konto“.',
+    'auth/invalid-email': 'Die E-Mail-Adresse ist ungültig.',
+    'auth/missing-password': 'Bitte ein Passwort eingeben.',
+    'auth/weak-password': 'Das Passwort braucht mindestens 6 Zeichen.',
+    'auth/invalid-credential': 'E-Mail oder Passwort ist falsch.',
+    'auth/wrong-password': 'E-Mail oder Passwort ist falsch.',
+    'auth/user-not-found': 'E-Mail oder Passwort ist falsch.',
+    'auth/too-many-requests': 'Zu viele Versuche. Bitte später nochmals probieren.',
+    'auth/operation-not-allowed': 'E-Mail-Anmeldung ist in Firebase nicht aktiviert (siehe Anleitung).',
+    'auth/admin-restricted-operation': 'Anonyme Anmeldung ist in Firebase nicht aktiviert (siehe Anleitung).'
+  };
+  return m[c] || m[c.replace('firestore/', '')] || ('Fehler: ' + (e && e.message || c || 'unbekannt'));
+}
+function softRender(){ if (!V.sheet) render(); }
+
+/* ---------- views ---------- */
+function render(){
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('on', t.dataset.tab === V.tab));
+  const app = $('#app');
+  if (V.acct && document.getElementById('ae')) V.acctVals = { e: document.getElementById('ae').value, p: document.getElementById('ap').value };
+  app.innerHTML = V.tab === 'week' ? viewWeek() : V.tab === 'year' ? viewYear() : viewSettings();
+  if (V.sheet) renderSheet();
+}
+
+function rangeLabel(mon){
+  const sun = addDays(mon, 6);
+  if (mon.getMonth() === sun.getMonth()) return `${mon.getDate()}.–${sun.getDate()}. ${MON[sun.getMonth()]} ${sun.getFullYear()}`;
+  return `${mon.getDate()}. ${MS[mon.getMonth()]} – ${sun.getDate()}. ${MS[sun.getMonth()]} ${sun.getFullYear()}`;
+}
+
+function weekFoot(w){
+  if (w.done) return `<span>Saldo dieser Woche</span><span class="pill ${cls(w.saldo)}">${fmt(w.saldo, true)}</span>`;
+  if (w.saldo >= 0) return `<span>Soll erreicht</span><span class="pill pos">${fmt(w.saldo, true)}</span>`;
+  return `<span>${w.current ? 'Noch offen diese Woche' : 'Noch offen'}</span><span class="pill zero">${fmt(-w.saldo)}</span>`;
+}
+function missingDays(){
+  // Werktage (Mo–Fr) der letzten 30 Tage bis gestern ohne Eintrag
+  const out = [], st = S.settings.start;
+  for (let i = 30; i >= 1; i--) {
+    const d = addDays(new Date(), -i), k = K(d), wd = d.getDay();
+    if (wd === 0 || wd === 6 || k < st) continue;
+    const c = dayCalc(k);
+    if (!c.e && !c.type) out.push(k);
+  }
+  return out;
+}
+function banners(){
+  let h = '';
+  const m = missingDays();
+  if (m.length) { const d = P(m[0]); h += `<button class="banner" data-day="${m[0]}"><span class="bi" style="background:var(--orange)">!</span><span class="grow"><b>${m.length === 1 ? '1 Werktag' : m.length + ' Werktage'} ohne Eintrag</b><small>Ab ${WDL[d.getDay()]}, ${d.getDate()}. ${MON[d.getMonth()]} nachtragen</small></span>${chevS}</button>`; }
+  if (!HOSTED) {
+    const go = (col_, t, sub) => `<button class="banner" data-act="gosettings"><span class="bi" style="background:var(--${col_})">!</span><span class="grow"><b>${t}</b><small>${esc(sub)}</small></span>${chevS}</button>`;
+    const at = lsGet('syncAt'), age = at ? Math.floor((Date.now() - new Date(at)) / 864e5) : null;
+    if (!FB || !FB.uid) h += go('red', 'Online-Speicher nicht verbunden', cloud.err || 'Daten sind nur auf diesem Handy');
+    else if (cloud.err && cloud.err !== 'Keine Internetverbindung') h += go('red', 'Speichern fehlgeschlagen', cloud.err);
+    else if (lsGet('cloudDirty') && (age == null || age >= 2)) h += go('red', age == null ? 'Noch nicht online gespeichert' : 'Seit ' + age + ' Tagen nicht online gespeichert', 'Internetverbindung prüfen');
+    else if (FB.isAnon) h += go('orange', 'Konto sichern', 'Damit du die Daten auf einem neuen Handy wiederbekommst');
+  }
+  return h;
+}
+function viewWeek(){
+  const mon = V.week, cs = [...Array(7)].map((_, i) => dayCalc(K(addDays(mon, i))));
+  const w = weekCalc(mon);
+  const isCur = K(monday(new Date())) === K(mon);
+  const pct = w.soll ? Math.min(100, w.ist / w.soll * 100) : 0;
+  let h = `<header class="top"><div><h1>Woche ${isoWeek(addDays(mon, 3))}</h1><div class="sub">${rangeLabel(mon)}</div></div>
+    <div class="navs">${isCur ? '' : '<button class="link" data-act="thisweek">Heute</button>'}
+    <button class="chev" data-act="prevweek" aria-label="Vorherige Woche">${chevL}</button>
+    <button class="chev" data-act="nextweek" aria-label="Nächste Woche">${chevR}</button></div></header>
+  <section class="hero">
+    <div class="hero-num"><span class="big">${fmt(w.ist)}</span><span class="of">von ${fmt(w.soll)} Std.</span></div>
+    <div class="bar"><i style="width:${pct}%"></i></div>
+    <div class="hero-foot">${weekFoot(w)}</div>
+  </section>`;
+  h += banners();
+  if (isCur) {
+    const tc = dayCalc(TODAY);
+    h += `<button class="cta" data-day="${TODAY}"><span>Heute eintragen<small>${tc.ist ? 'Bisher ' + fmt(tc.ist) + ' Std. erfasst' : WDL[new Date().getDay()] + ', ' + new Date().getDate() + '. ' + MON[new Date().getMonth()]}</small></span>${chevR.replace('<svg','<svg width="16" height="16"')}</button>`;
+  }
+  h += `<div class="sect"><span>Tage</span></div><div class="list" style="--inset:68px">${cs.map(dayRow).join('')}</div>`;
+  return h;
+}
+
+function dayRow(c){
+  const wd = c.d.getDay(), isT = c.k === TODAY;
+  const blocks = (c.e && c.e.b || []).map(b => b.s + '–' + (b.e || '…')).join(', ');
+  let l1, l2 = '';
+  if (c.type) {
+    const t = TYPES[c.type];
+    l1 = `<span class="tag" style="color:${t.c}">${t.label}${HALF.has(c.type) && c.f === .5 ? ', halber Tag' : ''}</span>`;
+    l2 = esc(blocks || c.e?.n || (c.type === 'feiertag' ? c.holName || '' : ''));
+  } else if (blocks) { l1 = esc(blocks); l2 = esc(c.e?.n || ''); }
+  if (issues(c.e).length) l2 = '<span class="warn-t">Bitte prüfen</span>';
+  else { l1 = !c.inR ? '<span class="dim">Vor Erfassungsbeginn</span>' : c.k <= TODAY ? '<span class="todo">Eintragen</span>' : '<span class="dim">Noch offen</span>'; l2 = esc(c.e?.n || ''); }
+  return `<button class="row${isT ? ' today' : ''}${c.inR ? '' : ' prestart'}" data-day="${c.k}">
+    <div class="date"><div class="dw">${WD[wd]}</div><div class="dn">${c.d.getDate()}</div></div>
+    <div class="grow"><div class="l1">${l1}</div>${l2 ? `<div class="l2">${l2}</div>` : ''}</div>
+    <div class="right">${c.ist ? `<div class="h">${fmt(c.ist)}</div>` : ''}${c.credit && c.work ? `<div class="s dim">inkl. ${fmt(c.credit)} Gutschr.</div>` : ''}</div>${chevS}</button>`;
+}
+
+function viewYear(){
+  const y = V.year, r = yearCalc(y);
+  const left = r.vacTotal - r.vacUsed;
+  const lastDone = [...r.weeks].reverse().find(w => w.done);
+  let h = `<header class="top"><div><h1>${y}</h1><div class="sub">Jahresübersicht</div></div>
+    <div class="navs"><button class="chev" data-act="prevyear" aria-label="Vorheriges Jahr">${chevL}</button>
+    <button class="chev" data-act="nextyear" aria-label="Nächstes Jahr">${chevR}</button></div></header>
+  <section class="hero">
+    <div class="sub" style="margin:0 0 6px">Jahressaldo${lastDone ? ' bis Woche ' + isoWeek(addDays(lastDone.mon, 3)) : ''}</div>
+    <div class="hero-num"><span class="big ${cls(r.saldo)}">${fmt(r.saldo, true)}</span><span class="of">Std.</span></div>
+    ${r.carrySaldo ? `<div class="hero-foot"><span>Davon Übertrag aus ${y - 1}</span><span>${fmt(r.carrySaldo, true)}</span></div>` : ''}
+    ${r.cur ? `<div class="hero-foot"><span>Laufende Woche ${fmt(r.cur.ist)} von ${fmt(r.cur.soll)}</span><span class="dim">zählt ab Sonntag</span></div>` : ''}
+  </section>
+  <div class="stats">
+    <div class="stat wide"><div style="display:flex;justify-content:space-between;align-items:baseline"><span class="n">${num(left)} <span class="of" style="font-size:17px">von ${num(r.vacTotal)}</span></span><span class="dot" style="background:var(--teal)"></span></div>
+      <div class="lb">Ferientage übrig, ${num(r.vacUsed)} bezogen oder geplant</div>
+      <div class="bar"><i style="width:${r.vacTotal ? Math.min(100, r.vacUsed / r.vacTotal * 100) : 0}%;background:${left < 0 ? 'var(--red)' : 'var(--teal)'}"></i></div></div>
+    <div class="stat"><div class="n">${num(r.krank)}</div><div class="lb">Krankheitstage</div></div>
+    <div class="stat"><div class="n">${num(r.unfall)}</div><div class="lb">Unfalltage</div></div>
+  </div>`;
+  const ws = [...r.weeks].reverse();
+  if (!ws.length) return h + `<div class="sect"><span>Wochen</span></div><div class="list"><div class="empty">Noch keine erfassten Wochen in ${y}.</div></div>`;
+  const groups = new Map();
+  ws.forEach(w => { const t = addDays(w.mon, 3); const m = t.getFullYear() === y ? t.getMonth() : (t.getFullYear() < y ? 0 : 11); if (!groups.has(m)) groups.set(m, []); groups.get(m).push(w); });
+  groups.forEach((list, m) => {
+    const ms = list.reduce((a, w) => a + (w.done ? w.saldo : 0), 0);
+    h += `<div class="sect"><span>${MON[m]} <span class="${cls(ms)}">${fmt(ms, true)}</span></span><button class="mlink" data-act="month" data-y="${y}" data-m="${m}">Monatsblatt</button></div><div class="list">` +
+      list.map(w => `<button class="row" data-week="${K(w.mon)}"><div class="grow"><div class="l1">Woche ${isoWeek(addDays(w.mon, 3))}</div><div class="l2">${rangeLabel(w.mon).replace(/ \d{4}$/, '')}</div></div>
+        <div class="right"><div class="h">${fmt(w.ist)} <span class="dim" style="font-weight:400">/ ${fmt(w.soll)}</span></div><div class="s ${w.done ? cls(w.saldo) : 'dim'}">${w.done ? fmt(w.saldo, true) : 'läuft'}</div></div>${chevS}</button>`).join('') + `</div>`;
+  });
+  return h;
+}
+
+function accountSection(){
+  const f = V.acct, at = lsGet('syncAt');
+  const when = at ? new Date(at).toLocaleString('de-CH', { day: 'numeric', month: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+  let h = `<div class="sect"><span>Konto und Online-Speicher</span></div><div class="list">`;
+  if (!FB || !FB.uid) {
+    h += `<div class="row"><span class="grow"><span class="l1 danger" style="white-space:normal">${esc(cloud.err || 'Firebase ist noch nicht eingerichtet')}</span></span></div></div>
+    <div class="foot">Bis das behoben ist, werden die Einträge nur auf diesem Handy gespeichert.</div>`;
+    return h;
+  }
+  if (f) {
+    h += `<div class="field"><label for="ae">E-Mail</label><input id="ae" type="email" autocomplete="email" inputmode="email" value="${esc(V.acctVals.e || FB.email || '')}" style="width:200px"></div>
+      <div class="field"><label for="ap">Passwort</label><input id="ap" type="password" autocomplete="${f === 'link' ? 'new-password' : 'current-password'}" placeholder="${f === 'link' ? 'mind. 6 Zeichen' : ''}" value="${esc(V.acctVals.p || '')}" style="width:200px"></div>
+      <button class="row action" data-act="acct-submit" style="font-weight:600">${f === 'link' ? 'Konto sichern' : 'Anmelden'}</button>
+      ${f === 'login' ? '<button class="row action" data-act="acct-reset">Passwort vergessen</button>' : ''}
+      <button class="row action" data-act="acct-cancel">Abbrechen</button></div>
+      <div class="foot">${V.acctMsg ? '<b>' + esc(V.acctMsg) + '</b><br>' : ''}${f === 'link' ? 'Deine bisherigen Einträge bleiben erhalten und gehören danach zu diesem Konto.' : 'Nach der Anmeldung werden die Einträge dieses Kontos geladen. Einträge, die nur auf diesem Handy sind, werden dazugenommen.'}</div>`;
+    return h;
+  }
+  if (FB.isAnon) {
+    h += `<div class="row"><span class="grow"><span class="l1" style="white-space:normal">Online gespeichert${when ? ', zuletzt ' + when : ''}</span><span class="l2" style="white-space:normal">Konto noch nicht gesichert</span></span></div>
+      <button class="row action" data-act="acct-link" style="font-weight:600">Konto sichern</button>
+      <button class="row action" data-act="acct-login">Ich habe schon ein Konto</button></div>
+      <div class="foot">${V.acctMsg ? '<b>' + esc(V.acctMsg) + '</b><br>' : ''}Alle Einträge werden automatisch online gespeichert, ohne Netz später. Sichere das Konto einmalig mit E-Mail und Passwort, damit du die Daten auf einem neuen Handy wiederbekommst.</div>`;
+  } else {
+    h += `<div class="row"><span class="grow"><span class="l1">${esc(FB.email || 'Konto gesichert')}</span><span class="l2">${cloud.err ? '<span class="danger">' + esc(cloud.err) + '</span>' : 'Online gespeichert' + (when ? ', zuletzt ' + when : '')}</span></span></div></div>
+      <div class="foot">${V.acctMsg ? '<b>' + esc(V.acctMsg) + '</b><br>' : ''}Auf einem neuen Handy: App öffnen, Einstellungen, „Ich habe schon ein Konto“ und mit dieser E-Mail anmelden. Zusätzlich wird jeden Tag eine Kopie aller Daten abgelegt.</div>`;
+  }
+  return h;
+}
+function viewSettings(){
+  const st = S.settings, y = V.year;
+  const hm = holidays(y), byId = HOL.map(([id, name, fn]) => ({ id, name, d: fn(y) }));
+  return `<header class="top"><div><h1>Einstellungen</h1></div></header>
+  <div class="sect"><span>Arbeitszeit</span></div>
+  <div class="list">
+    <div class="field"><label for="weekly">Sollzeit pro Woche</label><input id="weekly" type="number" inputmode="decimal" min="1" max="80" step="0.5" value="${st.weekly}" data-set="weekly"><span class="dim">Std.</span></div>
+    <div class="field"><label for="credit">Gutschrift pro Abwesenheitstag</label><input id="credit" type="number" inputmode="decimal" min="0" max="24" step="0.25" value="${st.credit ?? st.weekly / 5}" data-set="credit"><span class="dim">Std.</span></div>
+  </div>
+  <div class="foot">Gearbeitet wird an beliebigen Tagen. Abgerechnet wird pro Woche: Stunden plus Gutschriften gegenüber der Sollzeit. Eine Woche zählt zum Jahressaldo, sobald sie abgeschlossen ist. Ferien, Krankheit, Unfall und Feiertage werden mit der Gutschrift pro Tag angerechnet, Feiertage am Wochenende nicht.</div>
+
+  <div class="sect"><span>Ferien</span></div>
+  <div class="list">
+    <div class="field"><label for="vac">Ferientage pro Jahr</label><input id="vac" type="number" inputmode="decimal" min="0" step="0.5" value="${st.vacation}" data-set="vacation"><span class="dim">Tage</span></div>
+  </div>
+
+  <div class="foot">Stundensaldo und nicht bezogene Ferientage werden automatisch ins nächste Jahr übertragen. Der Saldo startet am ${P(st.start).toLocaleDateString('de-CH')} bei 0.</div>
+
+  <div class="sect"><span>Monatsblatt</span></div>
+  <div class="list">
+    <div class="field"><label for="nm">Name</label><input id="nm" type="text" autocomplete="name" placeholder="Vor- und Nachname" value="${esc(st.name || '')}" data-set="name" style="width:190px"></div>
+  </div>
+
+  <div class="sect"><span>Feiertage Kanton Thurgau ${y}</span></div>
+  <div class="list">${byId.map(h => `<div class="field"><label for="h_${h.id}">${h.name}<div class="l2">${WDL[h.d.getDay()]}, ${h.d.getDate()}. ${MON[h.d.getMonth()]}</div></label><span class="sw"><input id="h_${h.id}" type="checkbox" data-hol="${h.id}" ${st.hol[h.id] ? 'checked' : ''}><span></span></span></div>`).join('')}</div>
+  <div class="foot">Aktivierte Feiertage werden automatisch eingetragen. Einzelne Tage kannst du im Tag selbst ändern.</div>
+
+  ${HOSTED ? '' : accountSection()}
+
+  <div class="sect"><span>Daten und Sicherung</span></div>
+  <div class="list">
+    <button class="row action" data-act="export">Jahr ${y} als CSV exportieren</button>
+    <button class="row action" data-act="backup">Sicherung speichern${st.lastBackup ? `<span class="grow"></span><span class="dim" style="font-size:15px">zuletzt ${P(st.lastBackup).toLocaleDateString('de-CH')}</span>` : ''}</button>
+    <label class="row action" style="cursor:pointer">Sicherung wiederherstellen<input type="file" accept=".json,application/json" data-restore hidden></label>
+  </div>
+  <div class="foot">${db && uid ? 'Alle Einträge werden dauerhaft in deinem Claude-Konto gespeichert und sind auf jedem Gerät verfügbar.' : 'Die Einträge werden auf diesem Handy und online in Firebase gespeichert.'} Zusätzlich kannst du jederzeit eine Sicherungsdatei speichern, zum Beispiel für den Arbeitgeber.${restoreMsg ? '<br><b>' + esc(restoreMsg) + '</b>' : ''}</div>
+</div>`;
+}
+
+/* ---------- Kontrolle von Tippfehlern ---------- */
+function issues(e){
+  const out = [], b = (e && e.b || []);
+  b.forEach((x, i) => {
+    const n = SLOT[i] || 'Weitere Zeit';
+    if (x.s && !x.e) out.push(n + ': „geht“ fehlt');
+    else if (!x.s && x.e) out.push(n + ': „kommt“ fehlt');
+    else if (x.s && x.e && toMin(x.e) !== 0 && toMin(x.e) <= toMin(x.s)) out.push(n + ': „geht“ liegt vor „kommt“');
+  });
+  const iv = b.filter(x => x.s && x.e).map(x => [toMin(x.s), toMin(x.e) || 1440]).filter(x => x[1] > x[0]).sort((p, q) => p[0] - q[0]);
+  for (let i = 1; i < iv.length; i++) if (iv[i][0] < iv[i - 1][1]) { out.push('Die Zeiten überschneiden sich'); break; }
+  if (blocksDur(b) > 12 * 60) out.push('Mehr als 12 Stunden an einem Tag');
+  return out;
+}
+
+/* ---------- day sheet ---------- */
+const SLOT = ['Vormittag', 'Nachmittag'];
+const patKey = b => (b || []).filter(x => x.s && x.e).map(x => x.s + '–' + x.e).join(', ');
+function blocksDur(b){ let m = 0; (b || []).forEach(x => { const a = toMin(x.s), z = toMin(x.e); if (a != null && z != null && z > a) m += z - a; }); return m; }
+function suggestions(){
+  const cnt = new Map(), recent = [];
+  Object.keys(S.years).sort().forEach(y => Object.keys(S.years[y].days).sort().forEach(k => {
+    const e = S.years[y].days[k]; const p = patKey(e.b); if (!p || (e.a && e.a !== 'arbeit')) return;
+    cnt.set(p, (cnt.get(p) || 0) + 1); recent.push(p);
+  }));
+  let list = [...cnt.entries()].sort((a, b) => b[1] - a[1]).map(x => x[0]);
+  ['06:00–12:00, 13:00–17:00', '06:00–12:00, 13:00–16:00', '06:00–12:00'].forEach(p => { if (!list.includes(p)) list.push(p); });
+  return list.slice(0, 3).map(p => ({ p, b: p.split(', ').map(x => { const [s, e] = x.split('–'); return { s, e }; }) }));
+}
+function renderSheet(){
+  const k = V.sheet, c = dayCalc(k), e = c.e || {};
+  const abs = e.a && e.a !== 'arbeit' ? e.a : (!e.a && c.holName ? 'feiertag' : null);
+  const fullAbs = abs && !(HALF.has(abs) && e.f === .5);
+  const blocks = (e.b || []).slice(); while (blocks.length < 2) blocks.push({ s: '', e: '' });
+  let h = `<div class="sh-head"><div class="daynav"><button class="chev" data-act="prevday" aria-label="Vorheriger Tag">${chevL}</button>
+      <h2 style="margin:0 4px">${WD[c.d.getDay()]}, ${c.d.getDate()}. ${MON[c.d.getMonth()]}</h2>
+      <button class="chev" data-act="nextday" aria-label="Nächster Tag">${chevR}</button></div>
+    <button class="link" data-act="close">Fertig</button></div>`;
+  if (c.holName) h += `<div class="hint">Feiertag: ${c.holName}</div>`;
+
+  if (!fullAbs) {
+    const cur = patKey(e.b);
+    h += `<div class="sect" style="margin-left:0;margin-right:0"><span>Mit einem Tipp eintragen</span></div><div class="sugs">` +
+      suggestions().map(s2 => `<button class="sug${cur === s2.p ? ' on' : ''}" data-sug="${s2.p}"><b>${s2.p.replace(', ', ' und ')}</b><span class="dim">${fmt(blocksDur(s2.b))} Std.</span></button>`).join('') + `</div>`;
+    h += `<div class="sect" style="margin-left:0;margin-right:0"><span>Oder Zeiten einstellen</span></div><div class="list">`;
+    blocks.forEach((b, i) => {
+      const t = f => `<label class="tw"><input class="tin" type="time" required value="${b[f] || ''}" data-slot="${i}:${f}" aria-label="${SLOT[i] || 'Weitere Zeit'} ${f === 's' ? 'kommt' : 'geht'}"><span class="ph">${f === 's' ? 'kommt' : 'geht'}</span></label>`;
+      h += `<div class="slot"><span class="nm">${SLOT[i] || 'Weitere Zeit'}</span>${t('s')}<span class="dash">–</span>${t('e')}</div>`;
+    });
+    h += `</div>`;
+  }
+
+  h += `<div class="sect" style="margin-left:0;margin-right:0"><span>Nicht gearbeitet?</span></div><div class="chips">` +
+    ['ferien', 'krank', 'unfall', 'feiertag', 'frei'].map(id => { const t = TYPES[id]; return `<button class="chip${abs === id ? ' on' : ''}" style="--c:${t.c}" data-type="${id}" aria-pressed="${abs === id}"><span class="dot" style="background:${t.c}"></span>${t.label}</button>`; }).join('') + `</div>`;
+  if (HALF.has(abs)) h += `<div class="seg" role="group"><button class="${e.f === .5 ? '' : 'on'}" data-frac="1">Ganzer Tag</button><button class="${e.f === .5 ? 'on' : ''}" data-frac="0.5">Halber Tag</button></div>`;
+
+  h += `<div id="issues">${issuesHtml(c.e)}</div>`;
+  h += `<div class="total" id="total"><span>Total ${c.credit ? '<span class="dim" style="font-size:14px">inkl. ' + fmt(c.credit) + ' ' + TYPES[c.type].label + '</span>' : ''}</span><span class="n">${fmt(c.ist)} <span class="of" style="font-size:15px">Std.</span></span></div>
+  <div class="sect" style="margin-left:0;margin-right:0"><span>Notiz (freiwillig)</span></div>
+  <textarea rows="1" placeholder="z. B. Baustelle" data-note>${esc(e.n || '')}</textarea>
+  ${c.e ? `<button class="del" data-act="clearday">Tag leeren</button>` : ''}`;
+  const sh = $('#sheet'), st = sh.scrollTop; sh.innerHTML = h; sh.scrollTop = st;
+}
+function openDay(k){ V.sheet = k; V.pick = null; renderSheet(); $('#sheet').scrollTop = 0; $('#wrap').classList.add('open'); }
+function closeSheet(){ $('#wrap').classList.remove('open'); V.sheet = null; render(); }
+
+/* ---------- events ---------- */
+const roundNow = () => { const d = new Date(); return fromMin(Math.round((d.getHours() * 60 + d.getMinutes()) / 5) * 5); };
+
+document.querySelector('.tabbar').addEventListener('click', ev => {
+  const t = ev.target.closest('[data-tab]'); if (!t) return;
+  V.tab = t.dataset.tab; window.scrollTo(0, 0); render();
+});
+
+$('#app').addEventListener('click', async ev => {
+  const el = ev.target.closest('[data-act],[data-day],[data-week]'); if (!el) return;
+  if (el.dataset.day) return openDay(el.dataset.day);
+  if (el.dataset.week) { V.week = P(el.dataset.week); V.tab = 'week'; window.scrollTo(0, 0); return render(); }
+  const a = el.dataset.act;
+  if (a === 'prevweek') V.week = addDays(V.week, -7);
+  if (a === 'nextweek') V.week = addDays(V.week, 7);
+  if (a === 'thisweek') V.week = monday(new Date());
+  if (a === 'prevyear') V.year--;
+  if (a === 'nextyear') V.year++;
+  if (a === 'stamp') {
+    TODAY = K(new Date());
+    const e = getEntry(TODAY, true); e.b = e.b || [];
+    const ob = e.b.find(b => b.s && !b.e);
+    if (ob) ob.e = roundNow(); else e.b.push({ s: roundNow(), e: '' });
+    if (navigator.vibrate) navigator.vibrate(10);
+    commit(TODAY);
+  }
+  if (a === 'gosettings') { V.tab = 'settings'; window.scrollTo(0, 0); }
+  if (a === 'month') return printMonth(+el.dataset.y, +el.dataset.m);
+  if (a === 'acct-link' || a === 'acct-login') { V.acct = a.slice(5); V.acctVals = {}; V.acctMsg = ''; }
+  if (a === 'acct-cancel') { V.acct = null; V.acctMsg = ''; }
+  if (a === 'acct-submit' || a === 'acct-reset') return accountAction(a);
+  if (a === 'export') return exportCsv();
+  if (a === 'backup') return backup();
+  render();
+});
+
+$('#app').addEventListener('change', ev => {
+  const el = ev.target, st = S.settings;
+  if (el.dataset.set) {
+    const f = el.dataset.set;
+    if (f === 'start') { if (el.value) st.start = el.value; }
+    else if (f === 'name') st.name = el.value.trim();
+    else { const v = parseFloat(String(el.value).replace(',', '.')); if (!isNaN(v) && v >= 0) st[f] = v; }
+    persist('settings'); render();
+  }
+  if (el.dataset.carry) {
+    const y = V.year, c = st.carry[y] = st.carry[y] || {};
+    if (el.dataset.carry === 'saldo') {
+      const raw = el.value.trim().replace('−', '-').replace(',', '.');
+      let m = 0;
+      if (raw.includes(':')) { const neg = raw.startsWith('-'); const [hh, mm] = raw.replace('-', '').split(':'); m = (parseInt(hh) || 0) * 60 + (parseInt(mm) || 0); if (neg) m = -m; }
+      else if (raw) m = Math.round((parseFloat(raw) || 0) * 60);
+      c.saldo = m;
+    } else c.vac = parseFloat(String(el.value).replace(',', '.')) || 0;
+    persist('settings'); render();
+  }
+  if (el.hasAttribute('data-restore') && el.files[0]) return restore(el.files[0]);
+  if (el.dataset.hol) { st.hol[el.dataset.hol] = el.checked; holCache = {}; persist('settings'); }
+});
+
+$('#wrap').addEventListener('click', ev => {
+  const el = ev.target.closest('[data-act],[data-type],[data-frac],[data-sug]'); if (!el) return;
+  const k = V.sheet, d = el.dataset;
+  if (d.act === 'close') return closeSheet();
+  if (!k) return;
+  if (d.act === 'prevday' || d.act === 'nextday') { V.sheet = K(addDays(P(k), d.act === 'prevday' ? -1 : 1)); V.pick = null; V.week = monday(P(V.sheet)); renderSheet(); return; }
+  const e = getEntry(k, true); e.b = e.b || [];
+  const toWork = () => { if (e.a && e.a !== 'arbeit' && !(HALF.has(e.a) && e.f === .5)) delete e.a; if (!e.a && dayCalc(k).holName) e.a = 'arbeit'; };
+  if (d.sug) {
+    e.b = d.sug.split(', ').map(x => { const [s1, e1] = x.split('–'); return { s: s1, e: e1 }; });
+    toWork(); V.pick = null; commit(k);
+    if (navigator.vibrate) navigator.vibrate(10);
+  }
+  if (d.type) {
+    const c = dayCalc(k), cur = e.a && e.a !== 'arbeit' ? e.a : (!e.a && c.holName ? 'feiertag' : null);
+    if (cur === d.type) { if (c.holName) e.a = 'arbeit'; else delete e.a; }
+    else if (d.type === 'feiertag' && c.holName) delete e.a;
+    else { e.a = d.type; delete e.f; }
+    if (e.a && e.a !== 'arbeit' && !HALF.has(e.a)) e.b = [];
+    if (HALF.has(e.a)) e.b = [];
+    V.pick = null; commit(k);
+  }
+  if (d.frac) { e.f = +d.frac; if (e.f === 1) e.b = []; commit(k); }
+  if (d.act === 'clearday') { delete ensureYear(k.slice(0, 4)).days[k]; persist('y' + k.slice(0, 4)); V.pick = null; }
+  // leere Hilfsblöcke nicht speichern
+  const ee = getEntry(k); if (ee && ee.b) { const keep = V.pick ? V.pick.i + 1 : 0; while (ee.b.length > keep && !ee.b[ee.b.length - 1].s && !ee.b[ee.b.length - 1].e) ee.b.pop(); commit(k); }
+  renderSheet();
+});
+/* Zeiteingabe per Tastatur: 6 → 06:00, 630 → 06:30, 1215 → 12:15, 6.30 / 6:30 */
+function parseT(v){
+  v = String(v || '').trim().replace(/[.,h ]/g, ':');
+  if (!v) return '';
+  let h, m;
+  if (v.includes(':')) { const [a, b] = v.split(':'); h = +a; m = b === '' ? 0 : +b; if (b && b.length === 1) m = m * 10; }
+  else if (/^\d{1,2}$/.test(v)) { h = +v; m = 0; }
+  else if (/^\d{3}$/.test(v)) { h = +v[0]; m = +v.slice(1); }
+  else if (/^\d{4}$/.test(v)) { h = +v.slice(0, 2); m = +v.slice(2); }
+  else return null;
+  if (!(h >= 0 && h <= 24 && m >= 0 && m < 60) || (h === 24 && m)) return null;
+  return h === 24 ? '24:00' : pad(h) + ':' + pad(m);
+}
+const SLOTS = ['0:s', '0:e', '1:s', '1:e'];
+function saveSlot(el){
+  const k = V.sheet; if (!k) return true;
+  const t = parseT(el.value);
+  el.classList.toggle('bad', t === null);
+  if (t === null) return false;
+  el.value = t;
+  const [i, f] = el.dataset.slot.split(':'), ii = +i;
+  const e = getEntry(k, true); e.b = e.b || [];
+  while (e.b.length <= ii) e.b.push({ s: '', e: '' });
+  if ((e.b[ii][f] || '') === t) return true;
+  e.b[ii][f] = t;
+  if (t && e.a && e.a !== 'arbeit' && !(HALF.has(e.a) && e.f === .5)) delete e.a;
+  if (t && !e.a && dayCalc(k).holName) e.a = 'arbeit';
+  while (e.b.length && !e.b[e.b.length - 1].s && !e.b[e.b.length - 1].e) e.b.pop();
+  commit(k); refreshSheetBits();
+  return true;
+}
+function focusNext(el){
+  const n = SLOTS[SLOTS.indexOf(el.dataset.slot) + 1];
+  const nx = n && document.querySelector(`[data-slot="${n}"]`);
+  if (nx) { nx.focus(); nx.select && nx.select(); } else el.blur();
+}
+function issuesHtml(e){ const is = issues(e); return is.length ? `<div class="issue">${is.map(esc).join('<br>')}</div>` : ''; }
+function refreshSheetBits(){
+  const k = V.sheet; if (!k) return;
+  const c = dayCalc(k), cur = patKey(c.e && c.e.b);
+  const iss = document.getElementById('issues'); if (iss) iss.innerHTML = issuesHtml(c.e);
+  const tot = document.getElementById('total');
+  if (tot) tot.innerHTML = `<span>Total ${c.credit ? '<span class="dim" style="font-size:14px">inkl. ' + fmt(c.credit) + ' ' + TYPES[c.type].label + '</span>' : ''}</span><span class="n">${fmt(c.ist)} <span class="of" style="font-size:15px">Std.</span></span>`;
+  document.querySelectorAll('[data-sug]').forEach(b => b.classList.toggle('on', b.dataset.sug === cur));
+  document.querySelectorAll('[data-type]').forEach(b => { const on = c.type === b.dataset.type; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
+  if (V.tab === 'week') $('#app').innerHTML = viewWeek();
+}
+$('#wrap').addEventListener('change', ev => { const el = ev.target; if (el.dataset && el.dataset.slot) saveSlot(el); });
+$('#wrap').addEventListener('input', ev => {
+  const el = ev.target, k = V.sheet; if (!k) return;
+  if (el.dataset.slot) return;
+  if (!el.hasAttribute('data-note')) return;
+  const e = getEntry(k, true); e.n = el.value; commit(k);
+});
+document.addEventListener('keydown', ev => { if (ev.key === 'Escape' && V.sheet) closeSheet(); });
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) { if (dirty.size) flush(); }
+  else { TODAY = K(new Date()); render(); if (FB && FB.uid && !dirty.size && !pending) loadAll().then(() => { dailyCopy(); softRender(); }); }
+});
+
+/* ---------- export ---------- */
+async function saveFile(name, data, mime){
+  if (dl) { try { await dl.save({ filename: name, data }); } catch(e){} return; }
+  const blob = new Blob([data], { type: mime });
+  try {
+    const file = new File([blob], name, { type: mime });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: name }); return; }
+  } catch(e){ if (e && e.name === 'AbortError') return; }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+async function exportCsv(){
+  const y = V.year, r = yearCalc(y);
+  const dec = m => (m / 60).toFixed(2).replace('.', ',');
+  const rows = [['Datum','Tag','KW','Zeiten','Arbeitszeit (h)','Abwesenheit','Gutschrift (h)','Total (h)','Notiz']];
+  for (let d = new Date(y, 0, 1); d.getFullYear() === y; d = addDays(d, 1)) {
+    const c = dayCalc(K(d));
+    if (!c.e && !c.type) continue;
+    if (!c.inR) continue;
+    rows.push([d.toLocaleDateString('de-CH'), WD[d.getDay()], isoWeek(d), (c.e?.b || []).map(b => b.s + '-' + (b.e || '')).join(' / '),
+      dec(c.work), c.type ? TYPES[c.type].label + (HALF.has(c.type) && c.f === .5 ? ' (halb)' : '') : '', dec(c.credit), dec(c.ist), c.e?.n || '']);
+  }
+  rows.push([]); rows.push(['Woche', 'von', 'bis', 'Ist (h)', 'Soll (h)', 'Saldo (h)']);
+  r.weeks.forEach(w => rows.push([isoWeek(addDays(w.mon, 3)), w.mon.toLocaleDateString('de-CH'), addDays(w.mon, 6).toLocaleDateString('de-CH'), dec(w.ist), dec(w.soll), w.done ? dec(w.saldo) : 'läuft']));
+  rows.push([]); rows.push(['Jahressaldo inkl. Übertrag', '', '', '', '', dec(r.saldo)]);
+  rows.push(['Ferientage bezogen', '', '', '', '', String(r.vacUsed).replace('.', ',')]);
+  const csv = '\uFEFF' + rows.map(rw => rw.map(v => { v = String(v ?? ''); return /[;"\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }).join(';')).join('\r\n');
+  await saveFile(`Arbeitszeit_${y}.csv`, csv, 'text/csv');
+}
+
+/* ---------- Monatsblatt (Drucken / PDF) ---------- */
+function saldoUntil(k){
+  // Saldo seit Erfassungsbeginn bis und mit Tag k, inkl. Vorjahre
+  const y = +k.slice(0, 4), sy = +S.settings.start.slice(0, 4);
+  let sal = y > sy ? yearCalc(y - 1).saldo : 0;
+  for (let d = new Date(y, 0, 1); K(d) <= k; d = addDays(d, 1)) { const c = dayCalc(K(d)); if (c.inR) sal += c.ist - c.soll; }
+  return sal;
+}
+function printMonth(y, m){
+  ensureYear(y);
+  const first = new Date(y, m, 1), last = new Date(y, m + 1, 0);
+  let ist = 0, soll = 0, vac = 0, krank = 0, unfall = 0, rows = '';
+  for (let d = first; d <= last; d = addDays(d, 1)) {
+    const c = dayCalc(K(d)), wd = d.getDay(), b = (c.e && c.e.b) || [];
+    if (c.inR) { ist += c.ist; soll += c.soll; }
+    if (c.type === 'ferien') vac += c.f; if (c.type === 'krank') krank += c.f; if (c.type === 'unfall') unfall += c.f;
+    const iv = b.filter(x => x.s && x.e).map(x => [toMin(x.s), toMin(x.e) || 1440]).sort((p, q) => p[0] - q[0]);
+    let pause = 0; for (let i = 1; i < iv.length; i++) pause += Math.max(0, iv[i][0] - iv[i - 1][1]);
+    const abs = c.type ? TYPES[c.type].label + (HALF.has(c.type) && c.f === .5 ? ' ½' : '') + (c.type === 'feiertag' && c.holName ? ' (' + c.holName + ')' : '') : '';
+    const t = (i, f) => (b[i] && b[i][f]) || '';
+    rows += `<tr class="${wd === 0 || wd === 6 ? 'we' : ''}"><td class="n">${pad(d.getDate())}.</td><td class="${wd === 0 ? 'so' : ''}">${WDL[wd]}</td>
+      <td>${t(0, 's')}</td><td>${t(0, 'e')}</td><td>${t(1, 's')}</td><td>${t(1, 'e')}</td>
+      <td class="n">${pause ? fmt(pause) : ''}</td><td class="n">${c.work ? fmt(c.work) : ''}</td><td>${esc(abs)}${c.credit ? ' ' + fmt(c.credit) : ''}</td><td>${esc(c.e?.n || '')}</td></tr>`;
+    if (wd === 0 || K(d) === K(last)) {
+      const w = weekCalc(monday(d));
+      if (wd === 0) rows += `<tr class="wk"><td colspan="7">Woche ${isoWeek(addDays(monday(d), 3))} (${monday(d).getDate()}.${monday(d).getMonth() + 1}.–${d.getDate()}.${d.getMonth() + 1}.)</td><td class="n">${fmt(w.ist)}</td><td colspan="2">Soll ${fmt(w.soll)}, Saldo ${fmt(w.saldo, true)}</td></tr>`;
+    }
+  }
+  const endK = K(last) < TODAY ? K(last) : TODAY;
+  const sal = saldoUntil(endK);
+  // Ferien: Anspruch des Jahres minus bezogen bis Monatsende
+  const yr = yearCalc(y);
+  let vacYear = 0; for (let d = new Date(y, 0, 1); d <= last; d = addDays(d, 1)) { const c = dayCalc(K(d)); if (c.inR && c.type === 'ferien') vacYear += c.f; }
+  const st = S.settings;
+  $('#print').innerHTML = `<h1>Arbeitszeitkontrolle ${MON[m]} ${y}</h1>
+  <div class="meta"><span>Name: ${esc(st.name || '______________________________')}</span><span>Sollzeit ${num(st.weekly)} Std. pro Woche</span></div>
+  <table><thead><tr><th>Datum</th><th>Tag</th><th>Vorm. kommt</th><th>geht</th><th>Nachm. kommt</th><th>geht</th><th>Pause</th><th>Arbeitszeit</th><th>Abwesenheit</th><th>Bemerkung</th></tr></thead><tbody>${rows}</tbody></table>
+  <div class="sum">
+    <span>Soll Arbeitszeit ${MON[m]}</span><span class="n">${fmt(soll)}</span>
+    <span>Ist geleistete Stunden (inkl. Gutschriften)</span><span class="n">${fmt(ist)}</span>
+    <span>Differenz Monatsarbeitszeit</span><span class="n">${fmt(ist - soll, true)}</span>
+    <span>Ferienbezug ${MON[m]} in Tagen</span><span class="n">${num(vac)}</span>
+    <span>Rest Ferienguthaben in Tagen</span><span class="n">${num(yr.vacTotal - vacYear)}</span>
+    <span>Kranktage ${MON[m]}</span><span class="n">${num(krank)}</span>
+    ${unfall ? `<span>Unfalltage ${MON[m]}</span><span class="n">${num(unfall)}</span>` : ''}
+    <span class="tot">Arbeitszeitsaldo per ${P(endK).toLocaleDateString('de-CH')}</span><span class="n tot">${fmt(sal, true)}</span>
+  </div>
+  <div class="note">Saldo seit ${P(st.start).toLocaleDateString('de-CH')}, Abrechnung pro Woche gegenüber ${num(st.weekly)} Std. Ferien, Krankheit, Unfall und Feiertage mit ${num(st.credit ?? st.weekly / 5)} Std. pro Tag angerechnet.</div>
+  <div class="sign"><div>Datum, Unterschrift Mitarbeiter</div><div>Datum, Unterschrift Vorgesetzter</div></div>`;
+  const old = document.title; document.title = `Arbeitszeit_${y}-${pad(m + 1)}${st.name ? '_' + st.name.replace(/\s+/g, '_') : ''}`;
+  setTimeout(() => { try { window.print(); } catch(e){} document.title = old; }, 50);
+}
+
+/* ---------- Konto (Firebase) ---------- */
+const cloud = { err: '' };
+function snapshot(){
+  for (let y = 2020; y <= new Date().getFullYear() + 1; y++) if (lsGet('y' + y)) ensureYear(y);
+  return { app: 'stunden', version: 2, saved: new Date().toISOString(), settings: S.settings, years: S.years };
+}
+async function accountAction(a){
+  const e = (document.getElementById('ae') || {}).value || '', p = (document.getElementById('ap') || {}).value || '';
+  V.acctVals = { e, p }; V.acctMsg = '';
+  try {
+    if (a === 'acct-reset') { await FB.reset(e.trim()); V.acctMsg = 'E-Mail zum Zurücksetzen des Passworts wurde gesendet.'; }
+    else if (V.acct === 'link') {
+      await FB.link(e.trim(), p);
+      V.acct = null; V.acctVals = {}; V.acctMsg = 'Konto gesichert.';
+    } else {
+      const newUid = await FB.signIn(e.trim(), p);
+      V.acct = null; V.acctVals = {};
+      if (newUid !== uid) { uid = newUid; mergeLocal = true; await loadAll(); dailyCopy(); }
+      V.acctMsg = 'Angemeldet. Deine Einträge sind geladen.';
+    }
+  } catch(err){ V.acctMsg = fbMsg(err); }
+  render();
+}
+
+let restoreMsg = '';
+async function backup(){
+  for (let y = 2000; y <= now0.getFullYear() + 1; y++) if (lsGet('y' + y)) ensureYear(y);
+  const data = { app: 'stunden', version: 1, saved: new Date().toISOString(), settings: S.settings, years: S.years };
+  await saveFile(`Stunden_Sicherung_${K(new Date())}.json`, JSON.stringify(data), 'application/json');
+  S.settings.lastBackup = K(new Date()); persist('settings'); render();
+}
+function restoreData(d){
+  if (!d || d.app !== 'stunden' || !d.years) throw 0;
+  if (d.settings) { S.settings = Object.assign({}, DEF, d.settings, { hol: Object.assign({}, DEF.hol, d.settings.hol || {}), carry: d.settings.carry || {} }); migrate(S.settings); holCache = {}; persist('settings'); }
+  let n = 0;
+  Object.entries(d.years).forEach(([y, v]) => { const t = ensureYear(y); Object.assign(t.days, v.days || {}); n += Object.keys(v.days || {}).length; persist('y' + y); });
+  restoreMsg = `Sicherung wiederhergestellt: ${n} Tage.`;
+  render();
+}
+async function restore(file){
+  try { restoreData(JSON.parse(await file.text())); }
+  catch(e){ restoreMsg = 'Diese Datei ist keine Stunden-Sicherung.'; render(); }
+}
+
+// alle lokal gespeicherten Jahre laden, damit Jahressaldo und Sicherung vollständig sind
+for (let y = 2020; y <= now0.getFullYear() + 1; y++) if (lsGet('y' + y)) ensureYear(y);
+// Browser bitten, die Daten nicht automatisch zu löschen
+try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch(e){}
+if ('serviceWorker' in navigator && location.protocol === 'https:' && !window.claude) navigator.serviceWorker.register('sw.js').catch(() => {});
+
+render();
+connect();
+</script>
+</body>
+</html>

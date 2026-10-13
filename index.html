@@ -446,6 +446,8 @@ function commit(k){
     if (!(e.b && e.b.length) && !e.a && !e.n) delete days[k];
   }
   if (FB && db) { lsSet('y' + y, S.years[y]); writeDay(k); return; }
+  // noch ohne Verbindung (Start ohne Netz): Tag merken und später übertragen
+  if (!HOSTED) { const pd = lsGet('pendDays') || []; if (!pd.includes(k)) pd.push(k); lsSet('pendDays', pd); }
   persist('y' + y);
 }
 
@@ -530,7 +532,7 @@ const clean = d => JSON.parse(JSON.stringify(d, (k, v) => (k === 'cloudKey' || k
 let pending = 0, mergeLocal = false, watching = false;
 const unsubs = new Map();
 // Betriebsart: single (in Claude oder ohne Firebase) | setup | login | pick | ma | chef
-let MODE = 'single', FIRM = null, MAS = [], OVER = null, hiddenAt = 0;
+let MODE = HOSTED ? 'single' : 'loading', FIRM = null, MAS = [], OVER = null, hiddenAt = 0;
 const viewingOther = () => MODE === 'chef';
 const maName = () => ((MAS.find(m => m.id === uid) || {}).name) || S.settings.name || '';
 // einen einzelnen Tag speichern: verändert nur diesen Tag, nie andere (kein Überschreiben von Einträgen anderer Geräte)
@@ -603,12 +605,15 @@ async function syncYear(y){
     if (snap.exists) {
       const d = snap.data(), local = (S.years[y] && S.years[y].days) || {};
       // nach Anmeldung auf neuem Gerät: lokale Tage behalten, die online noch fehlen
-      // nicht übertragene Änderungen (z. B. ohne Netz gemacht) haben Vorrang
-      const localWins = !HOSTED && lsGet('cloudDirty');
       const extra = mergeLocal ? Object.keys(local).filter(k => !(d.days || {})[k]) : [];
-      S.years[y] = { days: localWins ? Object.assign({}, d.days || {}, local) : Object.assign({}, mergeLocal ? local : {}, d.days || {}) };
+      const days = Object.assign({}, mergeLocal ? local : {}, d.days || {});
+      // ohne Netz geänderte Tage haben Vorrang, alle anderen kommen von online (z. B. Korrekturen des Chefs)
+      const pend = HOSTED ? [] : (lsGet('pendDays') || []).filter(k => k.startsWith(y + '-'));
+      pend.forEach(k => { if (local[k]) days[k] = local[k]; else delete days[k]; });
+      S.years[y] = { days };
       lsSet('y' + y, S.years[y]);
-      if (extra.length || localWins) { dirty.add('y' + y); flush(); }
+      if (FB && pend.length) { pend.forEach(writeDay); lsSet('pendDays', (lsGet('pendDays') || []).filter(k => !pend.includes(k))); }
+      if (extra.length) { dirty.add('y' + y); flush(); }
     }
     else if (S.years[y] && Object.keys(S.years[y].days).length) { dirty.add('y' + y); flush(); }
   } catch(e){ loaded.delete(y); }
@@ -616,7 +621,7 @@ async function syncYear(y){
 async function loadAll(){
   try {
     const snap = await db.collection(col()).doc('settings').get();
-    if (snap.exists && !(!HOSTED && lsGet('cloudDirty'))) { const r = snap.data(); const keep = { lastBackup: S.settings.lastBackup }; S.settings = Object.assign({}, DEF, r, { hol: Object.assign({}, DEF.hol, r.hol || {}), carry: r.carry || {} }); if (!S.settings.lastBackup) S.settings.lastBackup = keep.lastBackup; if (migrate(S.settings)) dirty.add('settings'); lsSet('settings', S.settings); holCache = {}; }
+    if (snap.exists) { const r = snap.data(); const keep = { lastBackup: S.settings.lastBackup }; S.settings = Object.assign({}, DEF, r, { hol: Object.assign({}, DEF.hol, r.hol || {}), carry: r.carry || {} }); if (!S.settings.lastBackup) S.settings.lastBackup = keep.lastBackup; if (migrate(S.settings)) dirty.add('settings'); lsSet('settings', S.settings); holCache = {}; }
     else if (MODE !== 'chef') dirty.add('settings');
   } catch(e){}
   loaded.clear();
@@ -636,9 +641,10 @@ async function connect(){
       FB = await (window.fbReady || Promise.resolve(null));
       if (FB && FB.uid) { db = FB.db; return await startFirm(); }
       cloud.err = (FB && FB.error) || 'Firebase ist noch nicht eingerichtet';
+      if (MODE !== 'ma') MODE = 'error';
     }
     render();
-  } catch(e){ render(); }
+  } catch(e){ if (!HOSTED) { cloud.err = fbMsg(e); if (MODE !== 'ma') MODE = 'error'; } render(); }
 }
 /* tägliche Kopie aller Daten als eigenes Dokument (firma/main/ma/<mitarbeiter>/backups/JJJJ-MM-TT) */
 function dailyCopy(){
@@ -676,7 +682,7 @@ function render(){ renderMain(); if (V.sheet) renderSheet(); }
 function renderMain(){
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('on', t.dataset.tab === V.tab));
   const app = $('#app');
-  const gate = ['setup', 'login', 'pick'].includes(MODE);
+  const gate = ['setup', 'login', 'pick', 'error', 'loading'].includes(MODE);
   if (document.body && document.body.classList) document.body.classList.toggle('gated', gate);
   if (gate) { app.innerHTML = viewGate(); return; }
   if (MODE === 'chef' && !uid) { app.innerHTML = viewBar() + (V.tab === 'settings' ? chefSettings() : viewOverview()); return; }
@@ -711,7 +717,7 @@ function openWeeks(){
 /* ---------- Firma: Chef und Mitarbeiter ---------- */
 async function startFirm(){
   try { FIRM = await FB.getDoc('firma/main'); }
-  catch(e){ cloud.err = fbMsg(e); MODE = 'single'; return render(); }
+  catch(e){ cloud.err = fbMsg(e); if (MODE !== 'ma') MODE = 'error'; return render(); }
   if (!FIRM) { MODE = 'setup'; return render(); }
   try { await loadMas(); } catch(e){ cloud.err = fbMsg(e); }
   if ((FIRM.chefs || []).includes(FB.uid)) {
@@ -724,7 +730,9 @@ async function startFirm(){
     return v && MAS.some(m => m.id === v) ? openMa(v) : showOverview();
   }
   const mine = MAS.find(m => m.device === FB.uid);
-  if (mine) { MODE = 'ma'; await openMa(mine.id); return openToday(); }
+  if (mine) { const pre = MODE === 'ma' && uid === mine.id; MODE = 'ma'; await openMa(mine.id); if (!pre) openToday(); return; }
+  // Handy ist nicht (mehr) verbunden, z. B. weil der Chef ein neues Handy zugelassen hat
+  if (gGet('lastMa')) { gSet('lastMa', ''); unwatchAll(); uid = null; LSP = ''; resetState(); }
   MODE = 'pick'; render();
 }
 async function loadMas(){ MAS = (await FB.list('firma/main/ma')).sort((a, b) => (a.name || '').localeCompare(b.name || '', 'de')); }
@@ -735,16 +743,21 @@ function resetState(){
 }
 // Daten eines Mitarbeiters öffnen (der Mitarbeiter auf seinem Handy oder der Chef)
 async function openMa(id){
-  if (dirty.size && uid) await flush();
+  const same = MODE === 'ma' && uid === id && LSP === 'ma:' + id + ':';
   unwatchAll();
-  uid = id; LSP = 'ma:' + id + ':';
-  resetState();
-  for (let y = 2020; y <= new Date().getFullYear() + 1; y++) if (lsGet('y' + y)) ensureYear(y);
-  if (MODE === 'chef') gSet('chefView', id);
-  render();
+  if (!same) {
+    if (dirty.size && uid) await flush();
+    uid = id; LSP = 'ma:' + id + ':';
+    resetState();
+    for (let y = 2020; y <= new Date().getFullYear() + 1; y++) if (lsGet('y' + y)) ensureYear(y);
+    if (MODE === 'chef') gSet('chefView', id);
+    render();
+  }
+  if (MODE === 'ma') { gSet('lastMa', id); gSet('maName', maName()); }
+  loaded.clear();
   await loadAll();
   if (maName()) S.settings.name = maName();
-  watchAll(); dailyCopy(); render();
+  watchAll(); dailyCopy(); liveRender();
 }
 // Chef: Übersicht aller Mitarbeiter
 async function showOverview(){
@@ -914,6 +927,11 @@ function chefSettings(){
 }
 function viewGate(){
   const msg = V.gateMsg ? '<b>' + esc(V.gateMsg) + '</b><br>' : '';
+  if (MODE === 'loading') return `<div class="gate"><h1>Stunden</h1><div class="sub">Wird geladen …</div></div>`;
+  if (MODE === 'error') return `<div class="gate"><h1>Keine Verbindung</h1><div class="sub">Die App erreicht die Datenbank nicht.</div>
+    <div class="list" style="margin-top:20px"><div class="row"><span class="grow"><span class="l1 danger" style="white-space:normal">${esc(cloud.err || 'Unbekannter Fehler')}</span></span></div>
+    <button class="row action" data-act="retry" style="font-weight:600">Erneut versuchen</button></div>
+    <div class="foot">Internetverbindung prüfen. Bleibt die Meldung, dem Chef einen Screenshot schicken.</div></div>`;
   if (MODE === 'pick') return `<div class="gate"><h1>Wer bist du?</h1><div class="sub">Einmal antippen. Danach ist dieses Handy mit dir verbunden.</div>
     <div class="list" style="margin-top:20px">` + (MAS.length ? MAS.map(m => m.device
       ? `<div class="row"><span class="grow"><span class="l1 dim">${esc(m.name)}</span><span class="l2">Mit einem anderen Handy verbunden</span></span></div>`
@@ -1163,6 +1181,7 @@ $('#app').addEventListener('click', async ev => {
   if (['claim', 'go-login', 'go-pick', 'pick-reload', 'setup-go', 'login-go', 'pw-reset'].includes(a)) return gateAction(a, el);
   if (['ma-new', 'ma-release', 'logout', 'email-change'].includes(a)) return chefAction(a, el);
   if (a === 'ov-reload') return showOverview();
+  if (a === 'retry') { location.reload(); return; }
   if (a === 'open-ma') { V.tab = 'week'; V.week = monday(new Date()); return openMa(el.dataset.id); }
   if (a === 'export') return exportCsv();
   if (a === 'backup') return backup();
@@ -1402,7 +1421,16 @@ for (let y = 2020; y <= now0.getFullYear() + 1; y++) if (lsGet('y' + y)) ensureY
 try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch(e){}
 if ('serviceWorker' in navigator && location.protocol === 'https:' && !window.claude) navigator.serviceWorker.register('sw.js').catch(() => {});
 
+// Mitarbeiter-Handy: sofort mit den Daten auf dem Handy starten, die Verbindung folgt im Hintergrund
+if (!HOSTED && gGet('lastMa')) {
+  const id = gGet('lastMa');
+  MODE = 'ma'; uid = id; LSP = 'ma:' + id + ':';
+  MAS = [{ id, name: gGet('maName') || '' }];
+  resetState();
+  for (let y = 2020; y <= now0.getFullYear() + 1; y++) if (lsGet('y' + y)) ensureYear(y);
+}
 render();
+if (MODE === 'ma') openToday();
 connect().then(() => { if (MODE === 'single') openToday(); });
 </script>
 </body>

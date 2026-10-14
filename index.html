@@ -142,6 +142,13 @@ button.row:active{background:var(--fill)}
 .sheet-wrap.open{pointer-events:auto}
 .sheet-wrap.open .scrim{opacity:1}
 .sheet-wrap.open .sheet{transform:none}
+@media (pointer: fine) and (min-width: 700px){
+  main{max-width:640px}
+  .sheet{top:50%;bottom:auto;left:50%;right:auto;width:560px;margin:0;max-height:88vh;border-radius:16px;
+    transform:translate(-50%,-47%);opacity:0;transition:transform .22s ease,opacity .22s ease;padding-bottom:24px;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+  .sheet-wrap.open .sheet{transform:translate(-50%,-50%);opacity:1}
+  button.row:hover,.sug:hover,.chip:hover{filter:brightness(.97)}
+}
 .sh-head{position:sticky;top:0;z-index:2;background:var(--sheet);display:flex;align-items:center;justify-content:space-between;padding:16px 0 10px}
 .sh-head h2{font-size:20px;font-weight:600;margin:0}
 .sh-head .link{font-weight:600}
@@ -179,6 +186,7 @@ textarea{width:100%;font:inherit;border:0;background:var(--card2);color:var(--te
 .tin::-webkit-date-and-time-value{text-align:center}
 .tin{display:block;min-height:48px;min-width:0;width:100%;font:inherit;font-size:22px;font-weight:600;padding:9px 0;border:0;border-radius:10px;background:var(--fill);color:var(--text);text-align:center;-webkit-appearance:none;appearance:none}
 .tin::placeholder{color:var(--ter);font-weight:400;font-size:18px}
+.tin-k::placeholder{color:var(--ter);font-weight:400;font-size:18px}
 .tin:focus{outline:2px solid var(--blue);outline-offset:0;background:var(--card2)}
 .tin.bad{outline:2px solid var(--red);outline-offset:0}
 .tbtn{flex:1;font-size:22px;font-weight:600;padding:9px 0;border:0;border-radius:10px;background:var(--fill);text-align:center}
@@ -365,6 +373,8 @@ const chevS = '<svg class="chevr" viewBox="0 0 8 14" fill="none" stroke="current
 let TODAY = K(new Date());
 // true, wenn die App in Claude läuft (dort speichert das Claude-Konto), false auf Vercel
 const HOSTED = !!(window.claude && window.claude.use);
+// PC (Maus/Touchpad): Zeiten per Tastatur statt Drehrad
+const DESK = !(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
 
 const TYPES = {
   arbeit:   { label: 'Arbeit',   c: 'var(--blue)' },
@@ -1133,9 +1143,11 @@ function renderSheet(){
     const cur = patKey(e.b);
     h += `<div class="sect" style="margin-left:0;margin-right:0"><span>Mit einem Tipp eintragen</span></div><div class="sugs">` +
       suggestions().map(s2 => `<button class="sug${cur === s2.p ? ' on' : ''}" data-sug="${s2.p}"><b>${s2.p.replace(', ', ' und ')}</b><span class="dim">${fmt(blocksDur(s2.b))} Std.</span></button>`).join('') + `</div>`;
-    h += `<div class="sect" style="margin-left:0;margin-right:0"><span>Oder Zeiten einstellen</span></div><div class="list">`;
+    h += `<div class="sect" style="margin-left:0;margin-right:0"><span>${DESK ? 'Oder Zeiten eintippen, z. B. 630 oder 17:15' : 'Oder Zeiten einstellen'}</span></div><div class="list">`;
     blocks.forEach((b, i) => {
-      const t = f => `<label class="tw"><input class="tin" type="time" required value="${b[f] || ''}" data-slot="${i}:${f}" aria-label="${SLOT[i] || 'Weitere Zeit'} ${f === 's' ? 'kommt' : 'geht'}"><span class="ph">${f === 's' ? 'kommt' : 'geht'}</span></label>`;
+      const t = f => DESK
+        ? `<input class="tin tin-k" type="text" inputmode="numeric" autocomplete="off" maxlength="5" value="${b[f] || ''}" placeholder="${f === 's' ? 'kommt' : 'geht'}" data-slot="${i}:${f}" aria-label="${SLOT[i] || 'Weitere Zeit'} ${f === 's' ? 'kommt' : 'geht'}">`
+        : `<label class="tw"><input class="tin" type="time" required value="${b[f] || ''}" data-slot="${i}:${f}" aria-label="${SLOT[i] || 'Weitere Zeit'} ${f === 's' ? 'kommt' : 'geht'}"><span class="ph">${f === 's' ? 'kommt' : 'geht'}</span></label>`;
       h += `<div class="slot"><span class="nm">${SLOT[i] || 'Weitere Zeit'}</span>${t('s')}<span class="dash">–</span>${t('e')}</div>`;
     });
     h += `</div>`;
@@ -1301,9 +1313,21 @@ function refreshSheetBits(){
   if (V.tab === 'week') $('#app').innerHTML = viewWeek();
 }
 $('#wrap').addEventListener('change', ev => { const el = ev.target; if (el.dataset && el.dataset.slot) saveSlot(el); });
+// PC: Tastatureingabe – 4 Ziffern oder hh:mm springen ins nächste Feld, Enter ebenso
+$('#wrap').addEventListener('keydown', ev => {
+  const el = ev.target; if (!DESK || !el.dataset || !el.dataset.slot || ev.key !== 'Enter') return;
+  ev.preventDefault(); if (saveSlot(el)) focusNext(el);
+});
+$('#wrap').addEventListener('focusin', ev => { const el = ev.target; if (DESK && el.dataset && el.dataset.slot) setTimeout(() => el.select && el.select(), 0); });
 $('#wrap').addEventListener('input', ev => {
   const el = ev.target, k = V.sheet; if (!k) return;
-  if (el.dataset.slot) return;
+  if (el.dataset.slot) {
+    if (!DESK) return;
+    el.classList.remove('bad');
+    const v = el.value.trim();
+    if (/^\d{4}$/.test(v) || /^\d{1,2}[:.,]\d{2}$/.test(v)) { if (saveSlot(el)) focusNext(el); }
+    return;
+  }
   if (!el.hasAttribute('data-note')) return;
   const e = getEntry(k, true); e.n = el.value; commit(k);
 });

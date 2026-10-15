@@ -216,12 +216,49 @@ textarea{width:100%;font:inherit;border:0;background:var(--card2);color:var(--te
 .issue{margin-top:12px;padding:11px 14px;border-radius:12px;background:color-mix(in srgb,var(--orange) 14%,transparent);color:var(--text);font-size:15px;line-height:1.4}
 .warn-t{color:var(--orange);font-weight:500}
 body.gated .tabbar{display:none}
-.gate h1{margin-top:28px}
-.gate .sub{margin-top:6px}
+.gate{max-width:380px;margin:0 auto;padding:max(48px,9vh) 4px 40px;display:flex;flex-direction:column;align-items:stretch}
+.g-logo{width:76px;height:76px;margin:0 auto 18px;border-radius:18px;box-shadow:0 8px 24px rgba(0,122,255,.28)}
+.g-logo svg{display:block;width:100%;height:100%}
+.g-center{min-height:60vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px}
+.g-center .g-logo{margin:0}
+.g-spin{width:22px;height:22px;border-radius:50%;border:2.5px solid var(--fill);border-top-color:var(--sec);animation:gspin .8s linear infinite}
+@keyframes gspin{to{transform:rotate(360deg)}}
+.g-title{font-size:28px;line-height:1.15;font-weight:700;letter-spacing:-.02em;text-align:center;margin:0}
+.g-sub{text-align:center;color:var(--sec);font-size:16px;margin:6px 0 26px}
+.g-form{background:var(--card);border-radius:14px;overflow:hidden}
+.g-field{display:block;padding:10px 16px 9px;position:relative;cursor:text}
+.g-field+.g-field::before{content:"";position:absolute;top:0;left:16px;right:0;height:.5px;background:var(--sep)}
+.g-field span{display:block;font-size:12.5px;font-weight:500;color:var(--sec);margin-bottom:2px}
+.g-field input{display:block;width:100%;border:0;outline:0;background:none;padding:2px 0;font:inherit;font-size:17px;color:var(--text)}
+.g-field input::placeholder{color:var(--ter)}
+.g-field:focus-within span{color:var(--blue)}
+.g-btn{display:block;width:100%;margin-top:18px;height:50px;border:0;border-radius:12px;background:var(--blue);color:#fff;font:inherit;font-size:17px;font-weight:600;cursor:pointer;transition:opacity .15s,transform .1s}
+.g-btn:active{transform:scale(.985);opacity:.85}
+.g-btn:disabled{opacity:.5}
+.g-links{display:flex;justify-content:center;gap:28px;margin-top:20px}
+.g-links .link{font-size:16px}
+.g-note{text-align:center;color:var(--sec);font-size:13.5px;line-height:1.4;margin:16px 8px 0}
+.g-msg{margin-top:14px;padding:11px 14px;border-radius:12px;background:color-mix(in srgb,var(--red) 12%,transparent);color:var(--red);font-size:14.5px;line-height:1.35;text-align:center}
+.g-msg.ok{background:color-mix(in srgb,var(--green) 14%,transparent);color:var(--green)}
+.g-card{background:var(--card);border-radius:14px;overflow:hidden}
+.g-name{display:flex;align-items:center;gap:12px;width:100%;padding:12px 16px;border:0;background:none;font:inherit;font-size:17px;color:var(--text);text-align:left;position:relative;cursor:pointer}
+.g-name+.g-name::before{content:"";position:absolute;top:0;left:68px;right:0;height:.5px;background:var(--sep)}
+.g-name:active{background:var(--fill)}
+.g-ini{width:40px;height:40px;border-radius:50%;flex:none;display:grid;place-items:center;background:linear-gradient(180deg,#5AA9FF,#007AFF);color:#fff;font-size:15px;font-weight:600}
+.g-avatar{width:76px;height:76px;margin:0 auto 16px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(180deg,#5AA9FF,#007AFF);color:#fff;font-size:28px;font-weight:600}
+.g-pin{display:block;width:100%;border:0;outline:0;background:none;padding:16px 0 16px 22px;font:inherit;font-size:34px;font-weight:600;letter-spacing:22px;text-align:center;color:var(--text);font-variant-numeric:tabular-nums}
+.g-pin::placeholder{color:var(--ter)}
+@media (pointer:fine) and (min-width:700px){body.gated{background:var(--bg)}
+  .gate{margin-top:6vh;padding:40px 36px 36px;max-width:420px;background:var(--card);border-radius:22px;box-shadow:0 1px 2px rgba(0,0,0,.04),0 12px 40px rgba(0,0,0,.08)}
+  .gate .g-form,.gate .g-card{background:var(--bg)}
+  .gate .g-form{border-radius:12px}}
 .gate-foot{display:flex;justify-content:space-between;gap:12px;margin:18px 16px 0}
 .who{margin:10px 4px 0;font-size:15px;font-weight:600;color:var(--sec)}
 .action.danger{color:var(--red)}
 input:disabled{opacity:.6}
+.pin{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:6px;background:var(--fill);font-size:14px;font-weight:600;letter-spacing:1px}
+.acts{display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex:none}
+.acts .link{padding:3px 2px;font-size:16px}
 .viewbar{display:flex;align-items:center;gap:10px;margin:10px 0 0;padding:8px 8px 8px 14px;border-radius:12px;background:var(--card);font-size:15px;color:var(--sec)}
 .viewbar.other{background:color-mix(in srgb,var(--orange) 16%,var(--card));color:var(--text)}
 .viewbar select{flex:1;font:inherit;font-size:16px;font-weight:600;color:var(--text);background:var(--fill);border:0;border-radius:8px;padding:8px 10px;min-width:0}
@@ -325,6 +362,7 @@ const V_ = '12.19.0', base = 'https://www.gstatic.com/firebasejs/' + V_ + '/';
       // allgemeine Datenbank-Hilfen
       getDoc: async p => { const x = await F.getDoc(F.doc(fs, p)); return x.exists() ? x.data() : null; },
       setDoc: (p, d) => F.setDoc(F.doc(fs, p), d),
+      deleteDoc: p => F.deleteDoc(F.doc(fs, p)),
       updateDoc: (p, d) => F.updateDoc(F.doc(fs, p), d),
       list: async p => (await F.getDocs(F.collection(fs, p))).docs.map(d => Object.assign({ id: d.id }, d.data())),
       newId: p => F.doc(F.collection(fs, p)).id,
@@ -697,9 +735,11 @@ function render(){ renderMain(); if (V.sheet) renderSheet(); }
 function renderMain(){
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('on', t.dataset.tab === V.tab));
   const app = $('#app');
-  const gate = ['setup', 'login', 'pick', 'error', 'loading'].includes(MODE);
+  const gate = ['setup', 'login', 'pick', 'pin', 'error', 'loading'].includes(MODE);
   if (document.body && document.body.classList) document.body.classList.toggle('gated', gate);
-  if (gate) { app.innerHTML = viewGate(); return; }
+  if (gate) { app.innerHTML = viewGate();
+    if (typeof DESK !== 'undefined' && DESK && (MODE === 'login' || MODE === 'setup')) setTimeout(() => { const x = document.getElementById(document.getElementById('lu') && document.getElementById('lu').value ? 'lp' : 'lu'); if (x && x.focus) x.focus(); }, 30);
+    return; }
   if (MODE === 'chef' && !uid) { app.innerHTML = viewBar() + (V.tab === 'settings' ? chefSettings() : viewOverview()); return; }
   app.innerHTML = viewBar() + (V.tab === 'week' ? viewWeek() : V.tab === 'year' ? viewYear() : viewSettings());
 }
@@ -744,9 +784,9 @@ async function startFirm(){
     const v = gGet('chefView');
     return v && MAS.some(m => m.id === v) ? openMa(v) : showOverview();
   }
-  const mine = MAS.find(m => m.device === FB.uid);
+  const mine = await findMyMa();
   if (mine) { const pre = MODE === 'ma' && uid === mine.id; MODE = 'ma'; await openMa(mine.id); if (!pre) openToday(); return; }
-  // Handy ist nicht (mehr) verbunden, z. B. weil der Chef ein neues Handy zugelassen hat
+  // Gerät ist nicht (mehr) verbunden, z. B. weil der Chef es getrennt hat
   if (gGet('lastMa')) { gSet('lastMa', ''); unwatchAll(); uid = null; LSP = ''; resetState(); }
   MODE = 'pick'; render();
 }
@@ -782,16 +822,29 @@ async function showOverview(){
   try { await loadMas(); OVER = await Promise.all(MAS.map(summaryFor)); } catch(e){ cloud.err = fbMsg(e); OVER = []; }
   render();
 }
+// Mit welchem Mitarbeiter ist dieses Gerät verbunden?
+async function findMyMa(){
+  const isMine = async m => {
+    if (m.device === FB.uid) return true;
+    try { return !!(await FB.getDoc('firma/main/ma/' + m.id + '/devices/' + FB.uid)); } catch(e){ return false; }
+  };
+  const last = MAS.find(m => m.id === gGet('lastMa'));
+  if (last && await isMine(last)) return last;
+  for (const m of MAS) if (m !== last && await isMine(m)) return m;
+  return null;
+}
+const newPin = () => { const a = new Uint32Array(1); (window.crypto || {}).getRandomValues ? crypto.getRandomValues(a) : (a[0] = Math.floor(Math.random() * 1e9)); return String(a[0] % 10000).padStart(4, '0'); };
 async function summaryFor(m){
   const base = 'firma/main/ma/' + m.id + '/data/', cy = +TODAY.slice(0, 4);
-  const [st, y1, y0] = await Promise.all([FB.getDoc(base + 'settings'), FB.getDoc(base + 'y' + cy), FB.getDoc(base + 'y' + (cy - 1))]);
+  const [st, y1, y0, pin, devs] = await Promise.all([FB.getDoc(base + 'settings'), FB.getDoc(base + 'y' + cy), FB.getDoc(base + 'y' + (cy - 1)),
+    FB.getDoc('firma/main/ma/' + m.id + '/private/pin').catch(() => null), FB.list('firma/main/ma/' + m.id + '/devices').catch(() => [])]);
   // mit den Daten dieses Mitarbeiters rechnen, danach den Zustand wiederherstellen
   const keep = { st: S.settings, ys: S.years, hc: holCache };
   S.settings = Object.assign({}, DEF, st || {}); S.settings.hol = Object.assign({}, DEF.hol, (st || {}).hol || {}); S.settings.carry = {};
   S.years = { [cy]: { days: (y1 && y1.days) || {} } }; if (y0) S.years[cy - 1] = { days: y0.days || {} }; holCache = {};
   try {
     const r = yearCalc(cy);
-    return { m, saldo: r.saldo, upTo: r.upTo, vacLeft: r.vacTotal - r.vacUsed, week: weekCalc(monday(new Date())), miss: openWeeks().length };
+    return { m, saldo: r.saldo, upTo: r.upTo, vacLeft: r.vacTotal - r.vacUsed, week: weekCalc(monday(new Date())), miss: openWeeks().length, pin: pin && pin.pin, devices: devs.length + (m.device ? 1 : 0) };
   } finally { S.settings = keep.st; S.years = keep.ys; holCache = keep.hc; }
 }
 const slugify = u => (u || '').trim().toLowerCase().replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').normalize('NFD').replace(/[^a-z0-9]/g, '');
@@ -816,12 +869,12 @@ function oldLocal(){
   for (let y = 2020; y <= new Date().getFullYear() + 1; y++) { const v = lsGet('y' + y); if (v && v.days && Object.keys(v.days).length) o.years[y] = v; }
   LSP = keep; return o;
 }
-async function claim(id){
+async function claim(id, pin){
   const m = MAS.find(x => x.id === id); if (!m) return;
-  if (typeof confirm === 'function' && !confirm('Bist du ' + m.name + '? Dieses Handy wird fest mit dir verbunden.')) return;
+  if (!/^\d{4}$/.test(pin || '')) { V.gateMsg = 'Bitte den 4-stelligen PIN eingeben.'; return render(); }
   const old = oldLocal();
-  try { await FB.updateDoc('firma/main/ma/' + id, { device: FB.uid, deviceAt: new Date().toISOString() }); }
-  catch(e){ V.gateMsg = e && e.code === 'permission-denied' ? 'Dieser Name ist bereits mit einem anderen Handy verbunden.' : fbMsg(e); await loadMas().catch(() => {}); return render(); }
+  try { await FB.setDoc('firma/main/ma/' + id + '/devices/' + FB.uid, { pin, at: new Date().toISOString(), info: (navigator.userAgent || '').slice(0, 90) }); }
+  catch(e){ V.gateMsg = e && e.code === 'permission-denied' ? 'PIN falsch. Bitte nochmals versuchen oder beim Chef nachfragen.' : fbMsg(e); return render(); }
   await loadMas(); MODE = 'ma'; await openMa(id);
   // Einträge aus der alten Version übernehmen, falls online noch nichts da ist
   let moved = 0;
@@ -835,7 +888,8 @@ async function gateAction(a, el){
   const user = ((document.getElementById('lu') || {}).value || '').trim(), pw = (document.getElementById('lp') || {}).value || '';
   if (user) V.gateUser = user;
   try {
-    if (a === 'claim') return await claim(el.dataset.id);
+    if (a === 'claim') { V.pinFor = el.dataset.id; MODE = 'pin'; render(); setTimeout(() => { const x = document.getElementById('pn'); if (x) x.focus(); }, 50); return; }
+    if (a === 'pin-go') return await claim(V.pinFor, ((document.getElementById('pn') || {}).value || '').trim());
     if (a === 'pw-reset' && !user) { V.gateMsg = 'Bitte zuerst den Benutzer eingeben.'; return render(); }
     if (a === 'go-login') { MODE = 'login'; return render(); }
     if (a === 'go-pick') { MODE = FIRM ? 'pick' : 'setup'; return render(); }
@@ -881,13 +935,22 @@ async function chefAction(a, el){
       const id = FB.newId('firma/main/ma');
       await FB.setDoc('firma/main/ma/' + id, { name, device: null, created: new Date().toISOString() });
       await FB.setDoc('firma/main/ma/' + id + '/data/settings', clean(Object.assign({}, DEF, { start, name, v: 2 })));
-      V.chefMsg = name + ' ist eröffnet.';
+      const pin = newPin();
+      await FB.setDoc('firma/main/ma/' + id + '/private/pin', { pin });
+      V.chefMsg = name + ' ist eröffnet. PIN: ' + pin;
     }
     if (a === 'ma-release') {
       const m = MAS.find(x => x.id === el.dataset.id);
-      if (typeof confirm === 'function' && !confirm('Neues Handy für ' + (m ? m.name : '') + ' zulassen? Das bisherige Handy wird getrennt.')) return;
-      await FB.updateDoc('firma/main/ma/' + el.dataset.id, { device: null, deviceAt: null });
-      V.chefMsg = (m ? m.name : 'Mitarbeiter') + ' kann jetzt auf dem neuen Handy den Namen wählen.';
+      if (typeof confirm === 'function' && !confirm('Alle Geräte von ' + (m ? m.name : '') + ' trennen? Danach braucht es wieder Name und PIN.')) return;
+      const devs = await FB.list('firma/main/ma/' + el.dataset.id + '/devices');
+      for (const d of devs) await FB.deleteDoc('firma/main/ma/' + el.dataset.id + '/devices/' + d.id);
+      if (m && m.device) await FB.updateDoc('firma/main/ma/' + el.dataset.id, { device: null, deviceAt: null });
+      V.chefMsg = 'Alle Geräte von ' + (m ? m.name : 'Mitarbeiter') + ' sind getrennt.';
+    }
+    if (a === 'pin-new') {
+      const m = MAS.find(x => x.id === el.dataset.id), pin = newPin();
+      await FB.setDoc('firma/main/ma/' + el.dataset.id + '/private/pin', { pin });
+      V.chefMsg = 'Neuer PIN für ' + (m ? m.name : 'Mitarbeiter') + ': ' + pin + '. Bereits verbundene Geräte bleiben verbunden.';
     }
     if (a === 'logout') { await FB.logout(); gSet('chefView', ''); location.reload(); return; }
     if (a === 'email-change') {
@@ -920,11 +983,12 @@ function viewOverview(){
   else if (!OVER.length) h += `<div class="list"><div class="empty">Noch keine Mitarbeiter. Unten den ersten eröffnen.</div></div>`;
   else h += `<div class="list">` + OVER.map(o => `<button class="row" data-act="open-ma" data-id="${o.m.id}"><div class="grow"><div class="l1">${esc(o.m.name)}</div><div class="l2">Diese Woche ${fmt(o.week.ist)} von ${fmt(o.week.soll)}, Ferien übrig ${num(o.vacLeft)}${o.miss ? ', <span class="warn-t">' + (o.miss === 1 ? '1 Woche' : o.miss + ' Wochen') + ' offen</span>' : ''}</div></div><div class="right"><div class="h ${cls(o.saldo)}">${fmt(o.saldo, true)}</div><div class="s dim">${o.upTo ? 'bis ' + d2(o.upTo) : 'noch nichts'}</div></div>${chevS}</button>`).join('') + `</div>`;
   h += `<div class="sect"><span>Mitarbeiter verwalten</span></div><div class="list">` +
-    MAS.map(m => `<div class="row"><span class="grow"><span class="l1">${esc(m.name)}</span><span class="l2">${m.device ? 'Mit Handy verbunden' : 'Noch kein Handy verbunden'}</span></span>${m.device ? `<button class="link" data-act="ma-release" data-id="${m.id}">Neues Handy zulassen</button>` : ''}</div>`).join('') +
+    MAS.map(m => { const o = (OVER || []).find(x => x.m.id === m.id) || {}; return `<div class="row"><span class="grow"><span class="l1">${esc(m.name)}${o.pin ? ` <span class="pin">PIN ${o.pin}</span>` : ''}</span><span class="l2">${o.devices ? (o.devices === 1 ? '1 Gerät verbunden' : o.devices + ' Geräte verbunden') : 'Noch kein Gerät verbunden'}</span></span>
+      <span class="acts"><button class="link" data-act="pin-new" data-id="${m.id}">${o.pin ? 'Neuer PIN' : 'PIN erstellen'}</button>${o.devices ? `<button class="link danger" data-act="ma-release" data-id="${m.id}">Geräte trennen</button>` : ''}</span></div>`; }).join('') +
     `<div class="field"><label for="nma">Neuer Mitarbeiter</label><input id="nma" type="text" autocomplete="off" placeholder="Vor- und Nachname" style="width:190px"></div>
     <div class="field"><label for="nms">Beginn</label><input id="nms" type="date" value="${TODAY}"></div>
     <button class="row action" data-act="ma-new" style="font-weight:600">Mitarbeiter eröffnen</button></div>
-    <div class="foot">${V.chefMsg ? '<b>' + esc(V.chefMsg) + '</b><br>' : ''}Der Mitarbeiter öffnet die App einmal auf seinem Handy und wählt seinen Namen. Danach ist das Handy fest mit ihm verbunden. Hat er ein neues Handy, hier „Neues Handy zulassen“ tippen.</div>`;
+    <div class="foot">${V.chefMsg ? '<b>' + esc(V.chefMsg) + '</b><br>' : ''}Der Mitarbeiter öffnet die App, wählt seinen Namen und gibt einmal pro Gerät seinen PIN ein. Mehrere Geräte sind möglich. Verliert er ein Handy, hier „Geräte trennen“ und bei Bedarf „Neuer PIN“.</div>`;
   return h;
 }
 function chefSettings(){
@@ -941,31 +1005,37 @@ function chefSettings(){
   <div class="foot">${V.chefMsg ? '<b>' + esc(V.chefMsg) + '</b><br>' : ''}Arbeitszeit, Ferien und Feiertage stellst du pro Mitarbeiter ein: oben den Mitarbeiter wählen, dann hier.</div>`;
 }
 function viewGate(){
-  const msg = V.gateMsg ? '<b>' + esc(V.gateMsg) + '</b><br>' : '';
-  if (MODE === 'loading') return `<div class="gate"><h1>Stunden</h1><div class="sub">Wird geladen …</div></div>`;
-  if (MODE === 'error') return `<div class="gate"><h1>Keine Verbindung</h1><div class="sub">Die App erreicht die Datenbank nicht.</div>
-    <div class="list" style="margin-top:20px"><div class="row"><span class="grow"><span class="l1 danger" style="white-space:normal">${esc(cloud.err || 'Unbekannter Fehler')}</span></span></div>
-    <button class="row action" data-act="retry" style="font-weight:600">Erneut versuchen</button></div>
-    <div class="foot">Internetverbindung prüfen. Bleibt die Meldung, dem Chef einen Screenshot schicken.</div></div>`;
-  if (MODE === 'pick') return `<div class="gate"><h1>Wer bist du?</h1><div class="sub">Einmal antippen. Danach ist dieses Handy mit dir verbunden.</div>
-    <div class="list" style="margin-top:20px">` + (MAS.length ? MAS.map(m => m.device
-      ? `<div class="row"><span class="grow"><span class="l1 dim">${esc(m.name)}</span><span class="l2">Mit einem anderen Handy verbunden</span></span></div>`
-      : `<button class="row" data-act="claim" data-id="${m.id}"><span class="grow l1">${esc(m.name)}</span>${chevS}</button>`).join('')
-      : `<div class="empty">Noch niemand eröffnet. Der Chef muss dich zuerst eröffnen.</div>`) + `</div>
-    <div class="foot">${msg}Neues Handy? Der Chef tippt bei deinem Namen auf „Neues Handy zulassen“. Danach hier deinen Namen wählen.</div>
-    <div class="gate-foot"><button class="link" data-act="pick-reload">Liste aktualisieren</button><button class="link" data-act="go-login">Als Chef anmelden</button></div></div>`;
+  const logo = `<div class="g-logo"><svg viewBox="0 0 512 512" aria-hidden="true"><rect width="512" height="512" rx="112" fill="#007AFF"/><circle cx="256" cy="256" r="150" fill="none" stroke="#fff" stroke-width="34"/><path d="M256 166v96l64 40" fill="none" stroke="#fff" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/></svg></div>`;
+  const msg = V.gateMsg ? `<div class="g-msg${/gesendet/.test(V.gateMsg) ? ' ok' : ''}">${esc(V.gateMsg)}</div>` : '';
+  const head = (t, sub, big) => `${logo}<h1 class="g-title">${t}</h1>${sub ? `<p class="g-sub">${sub}</p>` : ''}`;
+  const wrap = h => `<div class="gate">${h}</div>`;
+  if (MODE === 'loading') return wrap(`<div class="g-center">${logo}<div class="g-spin" aria-label="Wird geladen"></div></div>`);
+  if (MODE === 'error') return wrap(head('Keine Verbindung', 'Die App erreicht die Datenbank nicht.') +
+    `<div class="g-msg">${esc(cloud.err || 'Unbekannter Fehler')}</div>
+    <button class="g-btn" data-act="retry">Erneut versuchen</button>
+    <p class="g-note">Internetverbindung prüfen. Bleibt die Meldung, dem Chef einen Screenshot schicken.</p>`);
+  if (MODE === 'pin') { const pm = MAS.find(x => x.id === V.pinFor) || {};
+    return wrap(`<div class="g-avatar">${esc(initials(pm.name || ''))}</div><h1 class="g-title">${esc(pm.name || '')}</h1><p class="g-sub">Gib deinen PIN ein. Du bekommst ihn vom Chef.</p>
+    <div class="g-card"><input id="pn" class="g-pin" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" maxlength="4" placeholder="••••" aria-label="PIN"></div>
+    ${msg}<button class="g-btn" data-act="pin-go">Verbinden</button>
+    <p class="g-note">Nur einmal pro Gerät nötig.</p>
+    <div class="g-links"><button class="link" data-act="go-pick">Anderer Name</button></div>`); }
+  if (MODE === 'pick') return wrap(head('Wer bist du?', 'Tippe auf deinen Namen.') +
+    `<div class="g-card g-names">` + (MAS.length ? MAS.map(m => `<button class="g-name" data-act="claim" data-id="${m.id}"><span class="g-ini">${esc(initials(m.name))}</span><span class="grow">${esc(m.name)}</span>${chevS}</button>`).join('')
+      : `<div class="empty">Noch niemand eröffnet. Der Chef muss dich zuerst eröffnen.</div>`) + `</div>${msg}
+    <div class="g-links"><button class="link" data-act="pick-reload">Aktualisieren</button><button class="link" data-act="go-login">Chef-Anmeldung</button></div>`);
   const setup = MODE === 'setup';
-  return `<div class="gate"><h1>${setup ? 'Stunden einrichten' : 'Chef-Anmeldung'}</h1>
-    <div class="sub">${setup ? 'Lege einmalig das Chef-Konto der Firma an. Danach eröffnest du die Mitarbeiter.' : 'Mit Benutzer und Passwort des Chefs.'}</div>
-    <div class="list" style="margin-top:20px">
-      <div class="field"><label for="lu">${setup ? 'Benutzer' : 'Benutzer oder E-Mail'}</label><input id="lu" type="text" autocomplete="username" autocapitalize="off" autocorrect="off" value="${esc(V.gateUser || (setup ? 'ChäsLand' : ''))}" style="width:190px"></div>
-      ${setup ? `<div class="field"><label for="le">E-Mail des Chefs</label><input id="le" type="email" inputmode="email" autocomplete="email" value="${esc(V.gateEmail || 'c.aeschbacher@gmail.com')}" style="width:190px"></div>` : ''}
-      <div class="field"><label for="lp">Passwort</label><input id="lp" type="password" autocomplete="${setup ? 'new-password' : 'current-password'}" placeholder="${setup ? 'mind. 6 Zeichen' : ''}" style="width:190px"></div>
-      <button class="row action" data-act="${setup ? 'setup-go' : 'login-go'}" style="font-weight:600">${setup ? 'Einrichten' : 'Anmelden'}</button>
-      ${setup ? '' : '<button class="row action" data-act="pw-reset">Passwort vergessen</button>'}</div>
-    <div class="foot">${msg}${setup ? 'Mit dem Benutzer und dem Passwort meldet sich der Chef auf jedem PC oder Handy an. An die E-Mail-Adresse kommt bei Bedarf der Link „Passwort vergessen“. Mitarbeiter brauchen kein Passwort, sie wählen nur ihren Namen. Bist du Mitarbeiter? Dann muss der Chef die App zuerst einrichten.' : 'Meldest du dich auf einem Mitarbeiter-Handy an, ist dieses danach nicht mehr mit dem Mitarbeiter verbunden.'}</div>
-    ${setup ? '' : '<div class="gate-foot"><button class="link" data-act="go-pick">Zurück</button></div>'}</div>`;
+  return wrap(head(setup ? 'Stunden einrichten' : 'Anmelden', setup ? 'Einmalig das Chef-Konto der Firma anlegen.' : 'Chef-Zugang') +
+    `<div class="g-form">
+      <label class="g-field"><span>${setup ? 'Benutzer' : 'Benutzer oder E-Mail'}</span><input id="lu" type="text" autocomplete="username" autocapitalize="off" autocorrect="off" spellcheck="false" value="${esc(V.gateUser || (setup ? 'ChäsLand' : ''))}" placeholder="ChäsLand"></label>
+      ${setup ? `<label class="g-field"><span>E-Mail</span><input id="le" type="email" inputmode="email" autocomplete="email" value="${esc(V.gateEmail || 'c.aeschbacher@gmail.com')}"></label>` : ''}
+      <label class="g-field"><span>Passwort</span><input id="lp" type="password" autocomplete="${setup ? 'new-password' : 'current-password'}" placeholder="${setup ? 'mindestens 6 Zeichen' : '••••••••'}"></label>
+    </div>${msg}
+    <button class="g-btn" data-act="${setup ? 'setup-go' : 'login-go'}">${setup ? 'Einrichten' : 'Anmelden'}</button>
+    ${setup ? `<p class="g-note">Mit Benutzer und Passwort meldet sich der Chef auf jedem Gerät an. Die E-Mail braucht es nur für „Passwort vergessen“.</p>`
+      : `<div class="g-links"><button class="link" data-act="pw-reset">Passwort vergessen?</button><button class="link" data-act="go-pick">Mitarbeiter</button></div>`}`);
 }
+function initials(n){ return String(n).trim().split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join(''); }
 
 function banners(){
   let h = '';
@@ -1199,8 +1269,8 @@ $('#app').addEventListener('click', async ev => {
   }
   if (a === 'gosettings') { V.tab = 'settings'; window.scrollTo(0, 0); }
   if (a === 'month') return printMonth(+el.dataset.y, +el.dataset.m);
-  if (['claim', 'go-login', 'go-pick', 'pick-reload', 'setup-go', 'login-go', 'pw-reset'].includes(a)) return gateAction(a, el);
-  if (['ma-new', 'ma-release', 'logout', 'email-change'].includes(a)) return chefAction(a, el);
+  if (['claim', 'pin-go', 'go-login', 'go-pick', 'pick-reload', 'setup-go', 'login-go', 'pw-reset'].includes(a)) return gateAction(a, el);
+  if (['ma-new', 'ma-release', 'pin-new', 'logout', 'email-change'].includes(a)) return chefAction(a, el);
   if (a === 'ov-reload') return showOverview();
   if (a === 'retry') { location.reload(); return; }
   if (a === 'open-ma') { V.tab = 'week'; V.week = monday(new Date()); return openMa(el.dataset.id); }
@@ -1209,6 +1279,10 @@ $('#app').addEventListener('click', async ev => {
   render();
 });
 
+$('#app').addEventListener('input', ev => {
+  const el = ev.target;
+  if (el.id === 'pn') { el.value = el.value.replace(/\D/g, '').slice(0, 4); if (el.value.length === 4) gateAction('pin-go'); }
+});
 $('#app').addEventListener('change', ev => {
   const el = ev.target, st = S.settings;
   if (el.dataset.set) {
@@ -1334,6 +1408,7 @@ $('#wrap').addEventListener('input', ev => {
 document.addEventListener('keydown', ev => {
   if (ev.key === 'Escape' && V.sheet) closeSheet();
   if (ev.key === 'Enter' && ev.target && (ev.target.id === 'lp' || ev.target.id === 'lu')) gateAction(MODE === 'setup' ? 'setup-go' : 'login-go');
+  if (ev.key === 'Enter' && ev.target && ev.target.id === 'pn') gateAction('pin-go');
 });
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) { hiddenAt = Date.now(); if (dirty.size) flush(); }

@@ -1,38 +1,41 @@
 rules_version = '2';
-
-// Firestore-Regeln für die Stunden-App (Firma mit Chef und Mitarbeitern).
-// - Der Chef (firma/main.chefs) sieht und ändert alles.
-// - Ein Mitarbeiter-Handy sieht und ändert nur die Daten des Mitarbeiters, mit dem es verbunden ist.
-// - Ein Handy kann sich nur mit einem Namen verbinden, der noch frei ist. Ein neues Handy lässt der Chef zu.
 service cloud.firestore {
   match /databases/{database}/documents {
-
     function signedIn() { return request.auth != null; }
-    function isChef() {
-      return signedIn() && request.auth.uid in get(/databases/$(database)/documents/firma/main).data.chefs;
-    }
+    function isChef() { return signedIn() && request.auth.uid in get(/databases/$(database)/documents/firma/main).data.chefs; }
+    function maDoc(id) { return get(/databases/$(database)/documents/firma/main/ma/$(id)); }
     function isDevice(id) {
-      return signedIn() && get(/databases/$(database)/documents/firma/main/ma/$(id)).data.get('device', null) == request.auth.uid;
+      return signedIn() && (
+        exists(/databases/$(database)/documents/firma/main/ma/$(id)/devices/$(request.auth.uid)) ||
+        maDoc(id).data.get('device', null) == request.auth.uid);
+    }
+    function pinOk(id) {
+      return exists(/databases/$(database)/documents/firma/main/ma/$(id)/private/pin) &&
+        request.resource.data.pin == get(/databases/$(database)/documents/firma/main/ma/$(id)/private/pin).data.pin;
     }
 
     match /firma/main {
       allow read: if signedIn();
-      // einmalig beim Einrichten: wer einrichtet, wird Chef
       allow create: if signedIn() && request.resource.data.chefs == [request.auth.uid];
       allow update: if isChef();
     }
-
     match /firma/main/ma/{id} {
       allow read: if signedIn();
-      allow create, delete: if isChef();
-      allow update: if isChef()
-        || (signedIn()
-            && resource.data.get('device', null) == null
-            && request.resource.data.device == request.auth.uid
-            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['device', 'deviceAt']));
+      allow create, update, delete: if isChef();
     }
-
-    match /firma/main/ma/{id}/{sub}/{rest=**} {
+    // PIN: nur der Chef
+    match /firma/main/ma/{id}/private/{doc} {
+      allow read, write: if isChef();
+    }
+    // Geräte: ein Gerät verbindet sich selbst mit dem richtigen PIN
+    match /firma/main/ma/{id}/devices/{dev} {
+      allow read, delete: if isChef() || (signedIn() && request.auth.uid == dev);
+      allow create, update: if isChef() || (signedIn() && request.auth.uid == dev && pinOk(id));
+    }
+    match /firma/main/ma/{id}/data/{rest=**} {
+      allow read, write: if isChef() || isDevice(id);
+    }
+    match /firma/main/ma/{id}/backups/{rest=**} {
       allow read, write: if isChef() || isDevice(id);
     }
   }

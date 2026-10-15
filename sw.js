@@ -1,5 +1,5 @@
 // Offline-Unterstützung: App-Dateien zwischenspeichern, neue Version im Hintergrund holen.
-const CACHE = 'stunden-v15';
+const CACHE = 'stunden-v17';
 const FILES = ['./', 'index.html', 'manifest.webmanifest', 'icon.svg', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png', 'firebase-config.js'];
 
 self.addEventListener('install', e => {

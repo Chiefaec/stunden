@@ -3,7 +3,7 @@
 Web-App fürs Handy zur Arbeitszeiterfassung einer Firma:
 
 - Der Chef richtet die App einmal ein (Benutzer z. B. „ChäsLand“) und eröffnet die Mitarbeiter.
-- Jeder Mitarbeiter öffnet die App einmal auf seinem Handy und wählt seinen Namen. Danach ist das Handy fest mit ihm verbunden.
+- Jeder Mitarbeiter wählt in der App seinen Namen und gibt einmal pro Gerät seinen 4-stelligen PIN ein. Mehrere Geräte sind möglich.
 - Beim Öffnen erscheint immer die aktuelle Woche mit der Eingabe für heute.
 - Abrechnung pro Woche gegenüber 45 Std., Saldo bis Ende der letzten fertig eingetragenen Woche
 - Ferien (25 Tage), Krankheit, Unfall, Feiertage Kanton Thurgau inkl. 1. Mai
@@ -27,7 +27,7 @@ Alle Dateien dieses Ordners ins Repository laden (bestehende ersetzen). Vercel v
 
 1. Die Vercel-Adresse am PC öffnen. Es erscheint **Stunden einrichten**.
 2. Benutzer **ChäsLand**, E-Mail **c.aeschbacher@gmail.com** und ein Passwort (mind. 6 Zeichen) → **Einrichten**.
-3. Unter **Mitarbeiter verwalten** den Mitarbeiter eröffnen, z. B. „Adrian Tritten“, Beginn **13.01.2026**.
+3. Unter **Mitarbeiter verwalten** den Mitarbeiter eröffnen, z. B. „Adrian Tritten“, Beginn **13.01.2026**. Die App erstellt dabei den PIN.
 4. Oben bei der Auswahl „Adrian Tritten“ wählen → **Einstellungen** → **Sicherung wiederherstellen** → `Stunden_Import_Jan-Sept_2026.json` wählen. Damit sind alle Stunden seit Januar drin.
 
 **Chef auf weiteren PCs oder Handys:** Adresse öffnen → **Als Chef anmelden** → Benutzer „ChäsLand“ (oder die E-Mail-Adresse) und Passwort. Das geht auf beliebig vielen Geräten gleichzeitig.
@@ -39,11 +39,13 @@ Alle Dateien dieses Ordners ins Repository laden (bestehende ersetzen). Vercel v
 ## 4. Mitarbeiter-Handy (einmalig)
 
 1. Die Vercel-Adresse in **Safari** öffnen → Teilen → **Zum Home-Bildschirm**.
-2. Die App öffnen → **Wer bist du?** → eigenen Namen antippen → bestätigen.
+2. Die App öffnen → **Wer bist du?** → eigenen Namen antippen → **PIN** eingeben.
 
-Ab dann öffnet die App immer direkt den heutigen Tag. Ein Name kann nur mit einem Handy verbunden sein.
+Ab dann öffnet die App immer direkt den heutigen Tag. Den PIN sieht der Chef in der Übersicht unter **Mitarbeiter verwalten**.
 
-**Neues Handy:** Der Chef tippt in der Übersicht beim Namen auf **Neues Handy zulassen**. Danach auf dem neuen Handy den Namen wählen. Die Daten sind sofort wieder da.
+**Neues oder zweites Handy:** einfach wieder Namen wählen und PIN eingeben. Die Daten sind sofort da.
+
+**Handy verloren:** Der Chef tippt beim Namen auf **Geräte trennen** und danach auf **Neuer PIN**.
 
 ## Saldo
 
